@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<title>NOIR · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Capacitor (rutas inyectadas por cap sync) -->
+<script src="capacitor.js"></script>
+<script src="plugins/@capacitor-firebase/messaging.js"></script>
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Inter',sans-serif;
+    background:#0a0a0a; color:#f5f5f5;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  button,input,textarea,select{font-family:inherit;color:inherit}
+  input,textarea{user-select:text}
+  button{cursor:pointer;background:none;border:none}
+
+  :root{
+    --bg:#0a0a0a;
+    --bg-2:#111;
+    --bg-3:#161616;
+    --line:#1f1f1f;
+    --line-2:#2a2a2a;
+    --txt:#f5f5f5;
+    --muted:#888;
+    --muted-2:#555;
+    --accent:#fff;
+    --ok:#30d158;
+    --warn:#ff9f0a;
+    --bad:#ff453a;
+    --blue:#0a84ff;
+    --ease:cubic-bezier(.32,.72,0,1);
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --safe-t:env(safe-area-inset-top,0px);
+  }
+
+  /* ============ LOGIN ============ */
+  .login{
+    position:fixed;inset:0;z-index:500;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:calc(32px + var(--safe-t)) 24px calc(32px + var(--safe-b));
+    background:radial-gradient(circle at 50% 0%, #171717 0%, #0a0a0a 60%);
+    transition:opacity .4s ease, visibility .4s ease;
+    overflow-y:auto;
+  }
+  .login.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .login-brand{
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.4em;font-size:12px;color:#888;
+    margin-bottom:12px;
+  }
+  .login-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(38px,7.5vw,60px);
+    letter-spacing:.05em;line-height:1;color:#fff;
+    margin-bottom:26px;text-align:center;
+  }
+  .auth-tabs{
+    display:flex;gap:4px;
+    background:#151515;border:1px solid var(--line-2);
+    border-radius:100px;padding:4px;
+    margin-bottom:22px;width:100%;max-width:340px;
+  }
+  .auth-tab{
+    flex:1;padding:10px 16px;border-radius:100px;
+    font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:500;
+    color:var(--muted);
+    transition:all .25s var(--ease);
+  }
+  .auth-tab.active{background:#fff;color:#000}
+  .auth-tab[hidden]{display:none}
+  .auth-tabs[hidden]{display:none}
+
+  .login-form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
+  .login-form input{
+    background:transparent;border:none;border-bottom:1px solid var(--line-2);
+    padding:14px 4px;font-size:16px;font-weight:300;letter-spacing:.03em;
+    outline:none;transition:border-color .3s;
+  }
+  .login-form input:focus{border-bottom-color:#fff}
+  .btn-primary{
+    margin-top:10px;
+    background:#fff;color:#000;
+    font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;
+    padding:16px;border-radius:14px;
+    transition:transform .2s var(--ease),background .2s;
+  }
+  .btn-primary:active{transform:scale(.97)}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed}
+  .login-error{
+    min-height:16px;font-size:12px;letter-spacing:.05em;
+    color:var(--bad);text-align:center;margin-top:6px;
+  }
+  .login-hint{
+    min-height:16px;font-size:11px;letter-spacing:.06em;
+    color:var(--muted);text-align:center;margin-top:2px;
+    line-height:1.6;
+  }
+
+  /* ============ APP ============ */
+  .app{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    opacity:0;transition:opacity .3s ease;
+  }
+  .app.ready{opacity:1}
+
+  .topbar{
+    position:relative;z-index:10;
+    padding:calc(14px + var(--safe-t)) 18px 14px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:rgba(10,10,10,.72);
+    backdrop-filter:blur(24px) saturate(1.4);
+    -webkit-backdrop-filter:blur(24px) saturate(1.4);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  .topbar-title{display:flex;flex-direction:column;min-width:0}
+  .topbar-title .brand{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:10px;letter-spacing:.35em;color:var(--muted);
+    margin-bottom:2px;
+  }
+  .topbar-title .page{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px;letter-spacing:.08em;color:#fff;line-height:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .topbar-actions{
+    display:flex;align-items:center;gap:8px;flex-shrink:0;
+  }
+
+  .status-badge{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:6px 11px;border-radius:100px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    font-size:11px;letter-spacing:.06em;font-weight:500;
+    transition:all .3s var(--ease);
+    white-space:nowrap;
+  }
+  .status-badge .dot{
+    width:7px;height:7px;border-radius:50%;background:var(--muted);
+  }
+  .status-badge.online{color:var(--ok)}
+  .status-badge.online .dot{background:var(--ok)}
+  .status-badge.offline{color:var(--warn)}
+  .status-badge.offline .dot{background:var(--warn)}
+  .status-badge.syncing{color:var(--blue)}
+  .status-badge.syncing .dot{background:var(--blue);animation:pulse 1.2s infinite}
+  @keyframes pulse{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.5;transform:scale(1.15)}
+  }
+
+  .logout-btn{
+    padding:6px 12px;border-radius:100px;
+    background:rgba(255,69,58,.12);
+    border:1px solid rgba(255,69,58,.35);
+    font-size:11px;letter-spacing:.12em;font-weight:600;
+    text-transform:uppercase;
+    color:#ff6b6b;
+    transition:all .2s var(--ease);
+    white-space:nowrap;
+  }
+  .logout-btn:active{
+    transform:scale(.94);
+    background:rgba(255,69,58,.28);
+    color:#fff;
+  }
+
+  .content{
+    flex:1;overflow-y:auto;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding:20px 16px calc(120px + var(--safe-b));
+  }
+  .content::-webkit-scrollbar{width:0}
+
+  .tabbar{
+    position:absolute;bottom:0;left:0;right:0;z-index:10;
+    display:grid;grid-template-columns:repeat(4,1fr);
+    padding:8px 8px calc(8px + var(--safe-b));
+    background:rgba(10,10,10,.78);
+    backdrop-filter:blur(28px) saturate(1.6);
+    -webkit-backdrop-filter:blur(28px) saturate(1.6);
+    border-top:1px solid rgba(255,255,255,.06);
+  }
+  .tab{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:8px 4px;border-radius:14px;
+    color:var(--muted-2);
+    transition:color .2s var(--ease), transform .15s var(--ease);
+  }
+  .tab svg{width:22px;height:22px;stroke-width:1.6}
+  .tab span{font-size:10px;letter-spacing:.05em;font-weight:500}
+  .tab.active{color:#fff}
+  .tab:active{transform:scale(.92)}
+
+  .stat-row{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    margin-bottom:18px;
+  }
+  .stat{
+    background:linear-gradient(180deg,#141414,#0f0f0f);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px 16px;
+  }
+  .stat-label{
+    font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:6px;
+  }
+  .stat-value{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:26px;letter-spacing:.03em;color:#fff;line-height:1;
+  }
+
+  .section-label{
+    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin:6px 4px 10px;
+  }
+  .list{display:flex;flex-direction:column;gap:10px}
+
+  .card{
+    display:flex;align-items:center;gap:14px;
+    background:linear-gradient(180deg,#141414,#0e0e0e);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+    transition:transform .18s var(--ease),background .2s;
+  }
+  .card:active{transform:scale(.985);background:#161616}
+  .card.clickable{cursor:pointer}
+
+  .avatar{
+    width:46px;height:46px;border-radius:50%;
+    background:#fff;color:#000;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:16px;letter-spacing:-.02em;
+    flex-shrink:0;
+  }
+  .thumb{
+    width:52px;height:52px;border-radius:12px;object-fit:cover;
+    background:#1a1a1a;flex-shrink:0;
+    filter:grayscale(.15);
+  }
+  .card-body{flex:1;min-width:0}
+  .card-title{
+    font-size:14px;font-weight:500;color:#fff;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    margin-bottom:3px;
+  }
+  .card-sub{
+    font-size:12px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .card-right{
+    display:flex;flex-direction:column;align-items:flex-end;gap:5px;
+    flex-shrink:0;
+  }
+  .badge{
+    display:inline-flex;align-items:center;
+    padding:3px 9px;border-radius:100px;
+    font-size:10px;font-weight:600;letter-spacing:.06em;
+    background:rgba(255,255,255,.08);color:#ccc;
+  }
+  .badge.ok{background:rgba(48,209,88,.15);color:#4cd964}
+  .badge.warn{background:rgba(255,159,10,.15);color:#ff9f0a}
+  .badge.bad{background:rgba(255,69,58,.15);color:#ff6b6b}
+  .badge.blue{background:rgba(10,132,255,.15);color:#5ac8fa}
+  .badge.grey{background:rgba(255,255,255,.05);color:#999}
+
+  .price{font-size:13px;font-weight:600;color:#fff}
+
+  .fab{
+    position:fixed;right:20px;bottom:calc(96px + var(--safe-b));
+    width:56px;height:56px;border-radius:50%;
+    background:#fff;color:#000;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:300;
+    box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.1);
+    z-index:20;
+    transition:transform .18s var(--ease);
+  }
+  .fab:active{transform:scale(.9)}
+
+  .empty{
+    padding:60px 20px;text-align:center;
+    color:var(--muted);font-size:13px;letter-spacing:.1em;line-height:1.8;
+  }
+
+  .date-strip{
+    display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;
+    scrollbar-width:none;margin-bottom:4px;
+  }
+  .date-strip::-webkit-scrollbar{display:none}
+  .date-chip{
+    flex-shrink:0;width:56px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:10px 4px;border-radius:14px;
+    background:#111;border:1px solid var(--line);
+    transition:all .22s var(--ease);
+  }
+  .date-chip .dw{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .date-chip .dn{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px;color:#fff;line-height:1;
+  }
+  .date-chip .cnt{
+    width:5px;height:5px;border-radius:50%;background:var(--blue);
+  }
+  .date-chip.active{background:#fff;border-color:#fff;color:#000}
+  .date-chip.active .dw,.date-chip.active .dn{color:#000}
+  .date-chip.active .cnt{background:#000}
+
+  .bk{
+    display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;
+    background:linear-gradient(180deg,#141414,#0e0e0e);
+    border:1px solid var(--line);
+    border-radius:16px;padding:14px;
+  }
+  .bk-time{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px;letter-spacing:.03em;color:#fff;
+    border-right:1px solid var(--line-2);padding-right:12px;
+    text-align:center;
+  }
+  .bk-time small{display:block;font-family:'Inter',sans-serif;font-size:9px;color:var(--muted);letter-spacing:.15em;margin-top:2px}
+
+  .bk-note{
+    display:inline-flex;align-items:center;gap:5px;
+    margin-top:6px;
+    font-size:11px;color:#ffb37a;letter-spacing:.02em;
+    max-width:100%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .bk-note::before{
+    content:"✎";
+    font-size:10px;
+    color:#ffb37a;
+    flex-shrink:0;
+  }
+
+  .sheet-backdrop{
+    position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,.6);
+    backdrop-filter:blur(4px);
+    opacity:0;visibility:hidden;transition:opacity .32s ease,visibility .32s ease;
+  }
+  .sheet-backdrop.open{opacity:1;visibility:visible}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:201;
+    background:#101010;
+    border-top-left-radius:22px;border-top-right-radius:22px;
+    border:1px solid var(--line-2);border-bottom:none;
+    max-height:90vh;
+    display:flex;flex-direction:column;
+    transform:translateY(100%);
+    transition:transform .42s var(--ease);
+    box-shadow:0 -12px 60px rgba(0,0,0,.6);
+    padding-bottom:var(--safe-b);
+  }
+  .sheet.open{transform:translateY(0)}
+  .sheet-grabber{
+    width:36px;height:4px;border-radius:100px;
+    background:#333;margin:8px auto 4px;
+    flex-shrink:0;
+  }
+  .sheet-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 20px 14px;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .sheet-header h3{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px;letter-spacing:.08em;color:#fff;
+  }
+  .sheet-close{
+    width:32px;height:32px;border-radius:50%;
+    background:#1c1c1c;color:#ccc;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;line-height:1;
+    transition:background .2s;
+  }
+  .sheet-close:active{background:#2a2a2a}
+  .sheet-body{
+    flex:1;overflow-y:auto;padding:18px 20px 24px;
+    overscroll-behavior:contain;
+  }
+
+  .field{margin-bottom:16px}
+  .field-label{
+    display:block;
+    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:8px;
+  }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="email"],
+  .field input[type="password"],
+  .field input[type="date"],
+  .field textarea,
+  .field select{
+    width:100%;
+    background:#0a0a0a;border:1px solid var(--line-2);
+    border-radius:12px;padding:13px 14px;
+    font-size:15px;font-weight:400;letter-spacing:.02em;
+    outline:none;transition:border-color .2s;
+    resize:vertical;
+    color:#fff;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:#fff}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .img-drop{
+    display:flex;align-items:center;gap:14px;
+    background:#0a0a0a;border:1px dashed var(--line-2);
+    border-radius:14px;padding:14px;
+    cursor:pointer;
+    transition:border-color .2s;
+  }
+  .img-drop:active{border-color:#fff}
+  .img-preview{
+    width:60px;height:60px;border-radius:12px;
+    background:#1a1a1a;object-fit:cover;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    color:#444;font-size:22px;
+  }
+  .img-drop-text{font-size:12px;color:var(--muted);line-height:1.5}
+  .img-drop-text strong{color:#fff;font-weight:500;display:block;margin-bottom:2px}
+
+  .switch{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 4px;margin-bottom:8px;
+  }
+  .switch-label{font-size:13px;color:#ddd;letter-spacing:.03em}
+  .switch input{display:none}
+  .switch-track{
+    width:46px;height:28px;border-radius:100px;
+    background:#2a2a2a;position:relative;
+    transition:background .25s var(--ease);flex-shrink:0;
+  }
+  .switch-track::after{
+    content:"";position:absolute;top:2px;left:2px;
+    width:24px;height:24px;border-radius:50%;
+    background:#fff;transition:transform .25s var(--ease);
+    box-shadow:0 2px 6px rgba(0,0,0,.4);
+  }
+  .switch input:checked + .switch-track{background:var(--ok)}
+  .switch input:checked + .switch-track::after{transform:translateX(18px)}
+
+  .sheet-actions{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    margin-top:22px;
+  }
+  .btn{
+    padding:15px;border-radius:14px;
+    font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    transition:transform .15s var(--ease),background .2s;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:#fff;color:#000}
+  .btn-ghost{background:#1a1a1a;color:#fff;border:1px solid var(--line-2)}
+  .btn-danger{background:rgba(255,69,58,.15);color:#ff6b6b;border:1px solid rgba(255,69,58,.3)}
+  .btn-full{grid-column:1/-1}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  .stock-actions{
+    display:flex;gap:6px;flex-shrink:0;
+  }
+  .stock-btn{
+    width:32px;height:32px;border-radius:50%;
+    background:#1c1c1c;color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;font-weight:400;
+    transition:background .2s, transform .15s;
+  }
+  .stock-btn:active{transform:scale(.88);background:#2a2a2a}
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(110px + var(--safe-b));
+    transform:translateX(-50%) translateY(20px);
+    background:#1f1f1f;color:#fff;
+    padding:12px 20px;border-radius:100px;
+    font-size:13px;letter-spacing:.03em;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    z-index:400;opacity:0;visibility:hidden;
+    transition:all .3s var(--ease);
+    white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+  }
+  .toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+  .toast.ok{background:#124a22;color:#c8f7d0}
+  .toast.err{background:#4a1010;color:#ffd0d0}
+
+  .pending-banner{
+    display:none;
+    align-items:center;gap:10px;
+    padding:10px 14px;margin-bottom:14px;
+    background:rgba(10,132,255,.12);
+    border:1px solid rgba(10,132,255,.25);
+    border-radius:12px;
+    font-size:12px;color:#5ac8fa;letter-spacing:.03em;
+  }
+  .pending-banner.visible{display:flex}
+  .pending-banner .spin{
+    width:12px;height:12px;border-radius:50%;
+    border:2px solid currentColor;border-top-color:transparent;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .note-box{
+    background:#181008;
+    border:1px solid #3a2810;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:20px;
+    font-size:13px;
+    color:#ffce9a;
+    line-height:1.55;
+    letter-spacing:.02em;
+  }
+  .note-box .nlabel{
+    display:block;
+    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:#ff9f0a;font-weight:600;
+    margin-bottom:6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login" id="loginScreen">
+  <div class="login-brand">— NOIR · ADMIN —</div>
+  <h1 class="login-title" id="authTitle">ACCESO</h1>
+
+  <div class="auth-tabs" id="authTabs" hidden>
+    <button class="auth-tab active" data-mode="login" id="tabLogin">Entrar</button>
+    <button class="auth-tab" data-mode="register" id="tabRegister">Crear cuenta</button>
+  </div>
+
+  <form class="login-form" id="loginForm">
+    <input type="email" id="loginEmail" placeholder="Email" autocomplete="username" required/>
+    <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password" required/>
+    <button class="btn-primary" type="submit" id="loginBtn">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint" id="loginHint"></div>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="appScreen">
+  <header class="topbar">
+    <div class="topbar-title">
+      <div class="brand">NOIR · ADMIN</div>
+      <div class="page" id="pageTitle">Calendario</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="status-badge" id="statusBadge">
+        <span class="dot"></span>
+        <span class="text">En línea</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button>
+    </div>
+  </header>
+
+  <main class="content" id="content"></main>
+
+  <nav class="tabbar">
+    <button class="tab" data-tab="clientes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      <span>Clientes</span>
+    </button>
+    <button class="tab active" data-tab="calendario">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span>Calendario</span>
+    </button>
+    <button class="tab" data-tab="servicios">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 10M9 16L20 6"/></svg>
+      <span>Servicios</span>
+    </button>
+    <button class="tab" data-tab="stock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+      <span>Stock</span>
+    </button>
+  </nav>
+
+  <button class="fab" id="fab" hidden>+</button>
+</div>
+
+<!-- ============ SHEET ============ -->
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-header">
+    <h3 id="sheetTitle">—</h3>
+    <button class="sheet-close" id="sheetClose">×</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* =========================================================
+   CONFIG
+   ========================================================= */
+const SUPABASE_URL  = 'https://byvmdpzfdpljtevmvuvd.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dm1kcHpmZHBsanRldm12dXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDQ3NjUsImV4cCI6MjEwMjcyMDc2NX0.7qmABJouBxXfgIODohYIaNTKSF3lN7Wu19OuclTopm8';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const CACHE_KEY = 'nb_admin_cache_v1';
+const QUEUE_KEY = 'nb_admin_queue_v1';
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+const state = {
+  tab: 'calendario',
+  selectedDate: isoToday(),
+  online: navigator.onLine,
+  syncing: false,
+  queue: [],
+  data: {
+    services: [],
+    products: [],
+    business_hours: [],
+    blocked_dates: [],
+    bookings: []
+  },
+  isAdmin: false,
+  loaded: false
+};
+
+let authMode = 'login';
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function isoToday(){ return toISO(new Date()); }
+function toISO(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(y,m-1,d);
+  return dt.toLocaleDateString('es-BO',{weekday:'long',day:'numeric',month:'long'});
+}
+function fmtDateShort(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(y,m-1,d);
+  return dt.toLocaleDateString('es-BO',{day:'numeric',month:'short'});
+}
+function uid(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
+}
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function initials(fn, ln){
+  return ((fn||' ')[0] + (ln||' ')[0]).toUpperCase().trim() || '?';
+}
+function dataUrlToBlob(dataUrl){
+  const [meta, b64] = dataUrl.split(',');
+  const mime = (meta.match(/data:([^;]+)/) || [,'image/jpeg'])[1];
+  const bin = atob(b64);
+  const u8 = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], {type:mime});
+}
+function toast(msg, type){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type||'');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.className = 'toast ' + (type||''), 2800);
+}
+
+/* =========================================================
+   CACHE / QUEUE
+   ========================================================= */
+function loadCache(){
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) Object.assign(state.data, JSON.parse(raw));
+  } catch(_){}
+  try {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    if (raw) state.queue = JSON.parse(raw) || [];
+  } catch(_){}
+}
+function saveCache(){
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(state.data)); } catch(_){}
+}
+function saveQueue(){
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(state.queue)); } catch(_){}
+}
+
+/* =========================================================
+   IMAGE OPTIMIZATION
+   ========================================================= */
+async function optimizeImage(file, maxSide = 900, quality = 0.82){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      const ratio = Math.min(maxSide/width, maxSide/height, 1);
+      const w = Math.round(width * ratio);
+      const h = Math.round(height * ratio);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+      c.toBlob(blob => blob ? resolve(blob) : reject(new Error('blob fail')), 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load fail')); };
+    img.src = url;
+  });
+}
+async function blobToDataUrl(blob){
+  return new Promise(res => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.readAsDataURL(blob);
+  });
+}
+async function uploadImage(bucket, blob){
+  const path = `${uid()}-${Date.now()}.jpg`;
+  const { data, error } = await sb.storage.from(bucket).upload(path, blob, {
+    contentType: 'image/jpeg', upsert: false
+  });
+  if (error) throw error;
+  const { data: pub } = sb.storage.from(bucket).getPublicUrl(data.path);
+  return pub.publicUrl;
+}
+
+/* =========================================================
+   QUEUE / SYNC
+   ========================================================= */
+function enqueue(op){
+  op.id = uid();
+  op.ts = Date.now();
+  state.queue.push(op);
+  saveQueue();
+  updateStatus();
+}
+
+async function flushQueue(){
+  if (!navigator.onLine || !state.queue.length) return;
+  const remaining = [];
+  let anySuccess = false;
+
+  for (const op of state.queue) {
+    try {
+      await executeOp(op);
+      anySuccess = true;
+    } catch (e) {
+      console.warn('Op failed', op, e);
+      if (String(e.message || '').includes('SLOT_TAKEN')) {
+        anySuccess = true;
+        continue;
+      }
+      remaining.push(op);
+    }
+  }
+
+  state.queue = remaining;
+  saveQueue();
+  if (anySuccess) await pullAll();
+}
+
+async function executeOp(op){
+  let payload = op.payload ? { ...op.payload } : null;
+
+  if (payload && payload.image_url && typeof payload.image_url === 'string'
+      && payload.image_url.startsWith('data:')) {
+    const blob = dataUrlToBlob(payload.image_url);
+    const url = await uploadImage(op.bucket, blob);
+    payload.image_url = url;
+  }
+
+  if (op.type === 'insert' && payload && payload.id != null) {
+    delete payload.id;
+  }
+
+  let r;
+  if (op.type === 'insert') {
+    r = await sb.from(op.table).insert(payload).select().single();
+  } else if (op.type === 'update') {
+    r = await sb.from(op.table).update(payload).eq('id', op.recordId).select().single();
+  } else if (op.type === 'delete') {
+    r = await sb.from(op.table).delete().eq('id', op.recordId);
+  }
+  if (r && r.error) throw r.error;
+  return r && r.data;
+}
+
+async function sync(){
+  if (state.syncing || !state.online || !state.isAdmin) return;
+  state.syncing = true;
+  updateStatus();
+  try {
+    await flushQueue();
+    if (state.queue.length === 0) await pullAll();
+  } catch (e) {
+    console.warn('sync error', e);
+  } finally {
+    state.syncing = false;
+    updateStatus();
+  }
+}
+
+/* =========================================================
+   PULL
+   ========================================================= */
+async function pullAll(){
+  const now = new Date();
+  const from = new Date(now); from.setDate(from.getDate() - 90);
+  const to   = new Date(now); to.setDate(to.getDate() + 90);
+
+  const [svc, prod, bh, bd, bk] = await Promise.all([
+    sb.from('services').select('*').order('sort_order',{ascending:true}),
+    sb.from('products').select('*').order('sort_order',{ascending:true}),
+    sb.from('business_hours').select('*').order('day_of_week').order('start_time'),
+    sb.from('blocked_dates').select('*'),
+    sb.from('bookings').select('*')
+      .gte('booking_date', toISO(from))
+      .lte('booking_date', toISO(to))
+      .order('booking_date',{ascending:true})
+      .order('start_time',{ascending:true})
+  ]);
+
+  if (svc.data)  state.data.services       = svc.data;
+  if (prod.data) state.data.products       = prod.data;
+  if (bh.data)   state.data.business_hours = bh.data;
+  if (bd.data)   state.data.blocked_dates  = bd.data;
+  if (bk.data)   state.data.bookings       = bk.data;
+
+  saveCache();
+  renderTab();
+}
+
+/* =========================================================
+   STATUS BADGE
+   ========================================================= */
+function updateStatus(){
+  const el = document.getElementById('statusBadge');
+  if (!el) return;
+  const txt = el.querySelector('.text');
+  el.classList.remove('online','offline','syncing');
+
+  if (!state.online) {
+    el.classList.add('offline');
+    const n = state.queue.length;
+    txt.textContent = n > 0 ? `Sin conexión · ${n}` : 'Sin conexión';
+    return;
+  }
+  if (state.syncing) {
+    el.classList.add('syncing');
+    txt.textContent = 'Sincronizando…';
+    return;
+  }
+  if (state.queue.length > 0) {
+    el.classList.add('syncing');
+    txt.textContent = `${state.queue.length} pendiente${state.queue.length>1?'s':''}`;
+    return;
+  }
+  el.classList.add('online');
+  txt.textContent = 'En línea';
+}
+
+/* =========================================================
+   NAVEGACIÓN TABS
+   ========================================================= */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    if (state.tab === t.dataset.tab) {
+      document.getElementById('content').scrollTo({top:0,behavior:'smooth'});
+      return;
+    }
+    state.tab = t.dataset.tab;
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+    document.getElementById('pageTitle').textContent =
+      ({clientes:'Clientes', calendario:'Calendario', servicios:'Servicios', stock:'Stock'})[state.tab];
+    renderTab();
+  });
+});
+
+/* =========================================================
+   RENDER TAB
+   ========================================================= */
+function renderTab(){
+  const c = document.getElementById('content');
+  const tab = state.tab;
+
+  const fab = document.getElementById('fab');
+  fab.hidden = !(tab === 'servicios' || tab === 'stock' || tab === 'calendario');
+  fab.onclick = () => {
+    if (tab === 'servicios') openServiceSheet();
+    else if (tab === 'stock') openProductSheet();
+    else if (tab === 'calendario') openNewBookingSheet();
+  };
+
+  const pendingBanner = state.queue.length > 0
+    ? `<div class="pending-banner visible">
+         <span class="spin"></span>
+         ${state.queue.length} cambio${state.queue.length>1?'s':''} pendiente${state.queue.length>1?'s':''} de sincronizar
+       </div>`
+    : '';
+
+  if (tab === 'clientes')   c.innerHTML = pendingBanner + viewClientes();
+  if (tab === 'calendario') c.innerHTML = pendingBanner + viewCalendario();
+  if (tab === 'servicios')  c.innerHTML = pendingBanner + viewServicios();
+  if (tab === 'stock')      c.innerHTML = pendingBanner + viewStock();
+
+  wireTab(tab);
+}
+
+/* =========================================================
+   VIEW: CLIENTES
+   ========================================================= */
+function viewClientes(){
+  const map = new Map();
+  for (const b of state.data.bookings || []){
+    const key = b.phone;
+    if (!map.has(key)) {
+      map.set(key, {
+        phone: b.phone,
+        first_name: b.first_name,
+        last_name: b.last_name,
+        count: 0,
+        lastDate: null,
+        total: 0
+      });
+    }
+    const c = map.get(key);
+    c.count++;
+    c.total += Number(b.service_price || 0);
+    if (!c.lastDate || b.booking_date > c.lastDate) {
+      c.lastDate = b.booking_date;
+      c.first_name = b.first_name || c.first_name;
+      c.last_name  = b.last_name  || c.last_name;
+    }
+  }
+
+  const clients = [...map.values()].sort((a,b) =>
+    (b.lastDate||'').localeCompare(a.lastDate||'')
+  );
+
+  if (!clients.length){
+    return `<div class="empty">Aún no hay clientes registrados.<br/>Las reservas aparecerán aquí.</div>`;
+  }
+
+  return `
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-label">Clientes</div>
+        <div class="stat-value">${clients.length}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Citas totales</div>
+        <div class="stat-value">${state.data.bookings.length}</div>
+      </div>
+    </div>
+    <div class="section-label">Recientes</div>
+    <div class="list">
+      ${clients.map(c => `
+        <div class="card clickable" data-phone="${escapeHtml(c.phone)}">
+          <div class="avatar">${initials(c.first_name, c.last_name)}</div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</div>
+            <div class="card-sub">+591 ${escapeHtml(c.phone)}</div>
+          </div>
+          <div class="card-right">
+            <span class="badge blue">${c.count} cita${c.count>1?'s':''}</span>
+            <span style="font-size:10px;color:var(--muted)">${c.lastDate ? fmtDateShort(c.lastDate) : ''}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* =========================================================
+   VIEW: CALENDARIO
+   ========================================================= */
+function viewCalendario(){
+  const days = [];
+  for (let i = -3; i <= 14; i++){
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    days.push(toISO(d));
+  }
+
+  const dayBookings = (state.data.bookings || [])
+    .filter(b => b.booking_date === state.selectedDate)
+    .filter(b => b.status !== 'cancelled')
+    .sort((a,b) => a.start_time.localeCompare(b.start_time));
+
+  const revenue = dayBookings.reduce((s,b) => s + Number(b.service_price||0), 0);
+
+  const dayCounts = {};
+  for (const b of state.data.bookings || []){
+    if (b.status === 'cancelled') continue;
+    dayCounts[b.booking_date] = (dayCounts[b.booking_date]||0) + 1;
+  }
+
+  const strip = days.map(iso => {
+    const [y,m,d] = iso.split('-').map(Number);
+    const dt = new Date(y,m-1,d);
+    const dw = dt.toLocaleDateString('es-BO',{weekday:'short'}).slice(0,3).toUpperCase();
+    const dn = String(d).padStart(2,'0');
+    const active = iso === state.selectedDate;
+    const cnt = dayCounts[iso] || 0;
+    return `
+      <button class="date-chip ${active?'active':''}" data-date="${iso}">
+        <span class="dw">${dw}</span>
+        <span class="dn">${dn}</span>
+        ${cnt ? '<span class="cnt"></span>' : '<span style="width:5px;height:5px"></span>'}
+      </button>
+    `;
+  }).join('');
+
+  const list = dayBookings.length
+    ? dayBookings.map(b => renderBookingRow(b)).join('')
+    : `<div class="empty">Sin reservas para este día.</div>`;
+
+  return `
+    <div class="date-strip">${strip}</div>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-label">Reservas</div>
+        <div class="stat-value">${dayBookings.length}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Ingreso estimado</div>
+        <div class="stat-value">Bs ${revenue}</div>
+      </div>
+    </div>
+    <div class="section-label">${fmtDate(state.selectedDate)}</div>
+    <div class="list">${list}</div>
+  `;
+}
+
+function renderBookingRow(b){
+  const statusMap = {
+    pending:   ['warn','Pendiente'],
+    confirmed: ['ok','Confirmada'],
+    completed: ['blue','Completada'],
+    cancelled: ['bad','Cancelada'],
+    no_show:   ['grey','No asistió']
+  };
+  const [cls, label] = statusMap[b.status] || ['grey', b.status];
+  const time = String(b.start_time).slice(0,5);
+  const end  = String(b.end_time).slice(0,5);
+  const hasNote = b.notes && String(b.notes).trim();
+
+  return `
+    <div class="card clickable bk" data-booking="${b.id}">
+      <div class="bk-time">${time}<small>${end}</small></div>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(b.first_name)} ${escapeHtml(b.last_name)}</div>
+        <div class="card-sub">${escapeHtml(b.service_name)}</div>
+        ${hasNote ? `<div class="bk-note">${escapeHtml(b.notes)}</div>` : ''}
+      </div>
+      <div class="card-right">
+        <span class="badge ${cls}">${label}</span>
+        <span style="font-size:11px;color:var(--muted)">Bs ${b.service_price}</span>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   VIEW: SERVICIOS
+   ========================================================= */
+function viewServicios(){
+  const list = state.data.services || [];
+  if (!list.length) {
+    return `<div class="empty">Sin servicios.<br/>Toca + para crear uno.</div>`;
+  }
+  return `
+    <div class="section-label">Servicios activos</div>
+    <div class="list">
+      ${list.map(s => `
+        <div class="card clickable" data-service="${s.id}">
+          ${s.image_url
+            ? `<img class="thumb" src="${escapeHtml(s.image_url)}" alt=""/>`
+            : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#333">✂</div>`}
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(s.name)}</div>
+            <div class="card-sub">${s.duration_min} min${s.active?'':' · inactivo'}</div>
+          </div>
+          <div class="card-right">
+            <span class="price">Bs ${s.price}</span>
+            ${!s.active ? '<span class="badge grey">Off</span>' : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* =========================================================
+   VIEW: STOCK
+   ========================================================= */
+function viewStock(){
+  const list = state.data.products || [];
+  if (!list.length) {
+    return `<div class="empty">Sin productos.<br/>Toca + para crear uno.</div>`;
+  }
+
+  const total = list.length;
+  const low = list.filter(p => p.stock <= 5).length;
+  const value = list.reduce((s,p) => s + (Number(p.price) * p.stock), 0);
+
+  return `
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-label">Productos</div>
+        <div class="stat-value">${total}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Stock bajo</div>
+        <div class="stat-value" style="color:${low?'var(--warn)':'#fff'}">${low}</div>
+      </div>
+    </div>
+    <div class="stat-row" style="grid-template-columns:1fr">
+      <div class="stat">
+        <div class="stat-label">Valor inventario</div>
+        <div class="stat-value">Bs ${value}</div>
+      </div>
+    </div>
+    <div class="section-label">Inventario</div>
+    <div class="list">
+      ${list.map(p => {
+        const stockCls = p.stock <= 0 ? 'bad' : p.stock <= 5 ? 'warn' : 'ok';
+        return `
+          <div class="card">
+            ${p.image_url
+              ? `<img class="thumb" src="${escapeHtml(p.image_url)}" alt=""/>`
+              : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#333">◇</div>`}
+            <div class="card-body" data-product-edit="${p.id}" style="cursor:pointer">
+              <div class="card-title">${escapeHtml(p.name)}</div>
+              <div class="card-sub">Bs ${p.price}</div>
+            </div>
+            <div class="card-right">
+              <div class="stock-actions">
+                <button class="stock-btn" data-stock-dec="${p.id}">−</button>
+                <button class="stock-btn" data-stock-inc="${p.id}">+</button>
+              </div>
+              <span class="badge ${stockCls}">${p.stock} u.</span>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* =========================================================
+   WIRE EVENTS PER TAB
+   ========================================================= */
+function wireTab(tab){
+  const c = document.getElementById('content');
+
+  if (tab === 'clientes'){
+    c.querySelectorAll('[data-phone]').forEach(el => {
+      el.addEventListener('click', () => openClientSheet(el.dataset.phone));
+    });
+  }
+  if (tab === 'calendario'){
+    c.querySelectorAll('.date-chip').forEach(el => {
+      el.addEventListener('click', () => {
+        state.selectedDate = el.dataset.date;
+        renderTab();
+      });
+    });
+    c.querySelectorAll('[data-booking]').forEach(el => {
+      el.addEventListener('click', () => openBookingSheet(Number(el.dataset.booking)));
+    });
+  }
+  if (tab === 'servicios'){
+    c.querySelectorAll('[data-service]').forEach(el => {
+      el.addEventListener('click', () => {
+        const s = state.data.services.find(x => String(x.id) === el.dataset.service);
+        if (s) openServiceSheet(s);
+      });
+    });
+  }
+  if (tab === 'stock'){
+    c.querySelectorAll('[data-product-edit]').forEach(el => {
+      el.addEventListener('click', () => {
+        const p = state.data.products.find(x => String(x.id) === el.dataset.productEdit);
+        if (p) openProductSheet(p);
+      });
+    });
+    c.querySelectorAll('[data-stock-inc]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        adjustStock(el.dataset.stockInc, +1);
+      });
+    });
+    c.querySelectorAll('[data-stock-dec]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        adjustStock(el.dataset.stockDec, -1);
+      });
+    });
+  }
+}
+
+/* =========================================================
+   ADJUST STOCK
+   ========================================================= */
+function adjustStock(id, delta){
+  const p = state.data.products.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const next = Math.max(0, Number(p.stock) + delta);
+  if (next === Number(p.stock)) return;
+  p.stock = next;
+  saveCache();
+  enqueue({
+    type: 'update',
+    table: 'products',
+    recordId: p.id,
+    payload: { stock: next, updated_at: new Date().toISOString() }
+  });
+  renderTab();
+  if (state.online) sync();
+}
+
+/* =========================================================
+   SHEET
+   ========================================================= */
+const sheetEl = document.getElementById('sheet');
+const sheetBackdrop = document.getElementById('sheetBackdrop');
+const sheetTitleEl = document.getElementById('sheetTitle');
+const sheetBodyEl = document.getElementById('sheetBody');
+
+function openSheet(title, html){
+  sheetTitleEl.textContent = title;
+  sheetBodyEl.innerHTML = html;
+  sheetBodyEl.scrollTop = 0;
+  sheetBackdrop.classList.add('open');
+  sheetEl.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet(){
+  sheetBackdrop.classList.remove('open');
+  sheetEl.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('sheetClose').addEventListener('click', closeSheet);
+sheetBackdrop.addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSheet();
+});
+
+(function(){
+  let startY = null, dy = 0;
+  sheetEl.addEventListener('touchstart', e => {
+    if (sheetBodyEl.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    dy = 0;
+  }, {passive:true});
+  sheetEl.addEventListener('touchmove', e => {
+    if (startY == null) return;
+    dy = Math.max(0, e.touches[0].clientY - startY);
+    if (dy > 0) sheetEl.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  sheetEl.addEventListener('touchend', () => {
+    if (startY == null) return;
+    if (dy > 110) closeSheet();
+    sheetEl.style.transition = 'transform .3s var(--ease)';
+    sheetEl.style.transform = '';
+    setTimeout(() => { sheetEl.style.transition = ''; }, 320);
+    startY = null; dy = 0;
+  });
+})();
+
+/* =========================================================
+   SHEET: SERVICIO
+   ========================================================= */
+function openServiceSheet(service){
+  const isNew = !service;
+  const s = service || { name:'', description:'', price:0, duration_min:30, image_url:'', active:true };
+
+  openSheet(isNew ? 'Nuevo servicio' : 'Editar servicio', `
+    <div class="field">
+      <label class="field-label">Foto</label>
+      <div class="img-drop" id="imgDrop">
+        ${s.image_url
+          ? `<img class="img-preview" id="imgPreview" src="${escapeHtml(s.image_url)}"/>`
+          : `<div class="img-preview" id="imgPreview">+</div>`}
+        <div class="img-drop-text">
+          <strong>Toca para cambiar</strong>
+          Se optimiza automáticamente (máx 900px)
+        </div>
+        <input type="file" id="imgInput" accept="image/*" hidden/>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Nombre</label>
+      <input type="text" id="fName" value="${escapeHtml(s.name)}" />
+    </div>
+    <div class="field">
+      <label class="field-label">Descripción</label>
+      <textarea id="fDesc" rows="2">${escapeHtml(s.description||'')}</textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Precio (Bs)</label>
+        <input type="number" id="fPrice" value="${s.price}" min="0" step="1"/>
+      </div>
+      <div class="field">
+        <label class="field-label">Duración (min)</label>
+        <input type="number" id="fDur" value="${s.duration_min}" min="5" step="5"/>
+      </div>
+    </div>
+    <div class="switch">
+      <span class="switch-label">Servicio activo</span>
+      <label style="display:flex;align-items:center">
+        <input type="checkbox" id="fActive" ${s.active?'checked':''}/>
+        <span class="switch-track"></span>
+      </label>
+    </div>
+    <div class="sheet-actions">
+      ${isNew ? '' : `<button class="btn btn-danger" id="btnDelete">Eliminar</button>`}
+      <button class="btn btn-primary ${isNew?'btn-full':''}" id="btnSave">Guardar</button>
+    </div>
+  `);
+
+  let pendingImageBlob = null;
+  let pendingImageData = s.image_url || '';
+
+  const imgInput = document.getElementById('imgInput');
+  const imgDrop = document.getElementById('imgDrop');
+  let imgPreview = document.getElementById('imgPreview');
+
+  imgDrop.addEventListener('click', () => imgInput.click());
+  imgInput.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const blob = await optimizeImage(file);
+      pendingImageBlob = blob;
+      pendingImageData = await blobToDataUrl(blob);
+      if (imgPreview.tagName === 'IMG') imgPreview.src = pendingImageData;
+      else {
+        const img = document.createElement('img');
+        img.className = 'img-preview'; img.id = 'imgPreview'; img.src = pendingImageData;
+        imgPreview.replaceWith(img);
+        imgPreview = img;
+      }
+    } catch(err){
+      toast('No se pudo procesar la imagen', 'err');
+    }
+  });
+
+  document.getElementById('btnSave').addEventListener('click', async () => {
+    const name = document.getElementById('fName').value.trim();
+    const desc = document.getElementById('fDesc').value.trim();
+    const price = Number(document.getElementById('fPrice').value) || 0;
+    const dur = Number(document.getElementById('fDur').value) || 30;
+    const active = document.getElementById('fActive').checked;
+
+    if (!name){ toast('El nombre es obligatorio', 'err'); return; }
+    if (price < 0 || dur < 5){ toast('Revisa precio y duración', 'err'); return; }
+
+    let imageUrl = pendingImageData;
+
+    if (pendingImageBlob && state.online){
+      try {
+        imageUrl = await uploadImage('services', pendingImageBlob);
+      } catch(e){
+        console.warn('upload fail', e);
+        toast('Se sincronizará la imagen luego', 'err');
+      }
+    }
+
+    const payload = {
+      name, description: desc, price, duration_min: dur,
+      image_url: imageUrl || null, active
+    };
+
+    if (isNew){
+      const tempId = 'temp_' + uid();
+      state.data.services.push({ id: tempId, ...payload, sort_order: state.data.services.length+1 });
+      saveCache();
+      enqueue({ type:'insert', table:'services', bucket:'services', payload: {...payload, id: tempId} });
+    } else {
+      const idx = state.data.services.findIndex(x => String(x.id) === String(s.id));
+      if (idx >= 0) state.data.services[idx] = { ...state.data.services[idx], ...payload };
+      saveCache();
+      enqueue({ type:'update', table:'services', bucket:'services', recordId: s.id, payload });
+    }
+
+    closeSheet();
+    renderTab();
+    toast(isNew ? 'Servicio creado' : 'Servicio actualizado', 'ok');
+    if (state.online) sync();
+  });
+
+  const delBtn = document.getElementById('btnDelete');
+  if (delBtn){
+    delBtn.addEventListener('click', () => {
+      if (!confirm('¿Eliminar este servicio?')) return;
+      state.data.services = state.data.services.filter(x => String(x.id) !== String(s.id));
+      saveCache();
+      enqueue({ type:'delete', table:'services', recordId: s.id });
+      closeSheet();
+      renderTab();
+      toast('Servicio eliminado', 'ok');
+      if (state.online) sync();
+    });
+  }
+}
+
+/* =========================================================
+   SHEET: PRODUCTO
+   ========================================================= */
+function openProductSheet(product){
+  const isNew = !product;
+  const p = product || { name:'', description:'', price:0, stock:0, image_url:'', active:true };
+
+  openSheet(isNew ? 'Nuevo producto' : 'Editar producto', `
+    <div class="field">
+      <label class="field-label">Foto</label>
+      <div class="img-drop" id="imgDrop">
+        ${p.image_url
+          ? `<img class="img-preview" id="imgPreview" src="${escapeHtml(p.image_url)}"/>`
+          : `<div class="img-preview" id="imgPreview">+</div>`}
+        <div class="img-drop-text">
+          <strong>Toca para cambiar</strong>
+          Optimizada automáticamente
+        </div>
+        <input type="file" id="imgInput" accept="image/*" hidden/>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Nombre</label>
+      <input type="text" id="fName" value="${escapeHtml(p.name)}" />
+    </div>
+    <div class="field">
+      <label class="field-label">Descripción</label>
+      <textarea id="fDesc" rows="2">${escapeHtml(p.description||'')}</textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Precio (Bs)</label>
+        <input type="number" id="fPrice" value="${p.price}" min="0" step="1"/>
+      </div>
+      <div class="field">
+        <label class="field-label">Stock</label>
+        <input type="number" id="fStock" value="${p.stock}" min="0" step="1"/>
+      </div>
+    </div>
+    <div class="switch">
+      <span class="switch-label">Producto activo</span>
+      <label style="display:flex;align-items:center">
+        <input type="checkbox" id="fActive" ${p.active?'checked':''}/>
+        <span class="switch-track"></span>
+      </label>
+    </div>
+    <div class="sheet-actions">
+      ${isNew ? '' : `<button class="btn btn-danger" id="btnDelete">Eliminar</button>`}
+      <button class="btn btn-primary ${isNew?'btn-full':''}" id="btnSave">Guardar</button>
+    </div>
+  `);
+
+  let pendingImageBlob = null;
+  let pendingImageData = p.image_url || '';
+
+  const imgInput = document.getElementById('imgInput');
+  const imgDrop = document.getElementById('imgDrop');
+  let imgPreview = document.getElementById('imgPreview');
+
+  imgDrop.addEventListener('click', () => imgInput.click());
+  imgInput.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const blob = await optimizeImage(file);
+      pendingImageBlob = blob;
+      pendingImageData = await blobToDataUrl(blob);
+      if (imgPreview.tagName === 'IMG') imgPreview.src = pendingImageData;
+      else {
+        const img = document.createElement('img');
+        img.className = 'img-preview'; img.id = 'imgPreview'; img.src = pendingImageData;
+        imgPreview.replaceWith(img);
+        imgPreview = img;
+      }
+    } catch(err){
+      toast('No se pudo procesar la imagen', 'err');
+    }
+  });
+
+  document.getElementById('btnSave').addEventListener('click', async () => {
+    const name = document.getElementById('fName').value.trim();
+    const desc = document.getElementById('fDesc').value.trim();
+    const price = Number(document.getElementById('fPrice').value) || 0;
+    const stock = Number(document.getElementById('fStock').value) || 0;
+    const active = document.getElementById('fActive').checked;
+
+    if (!name){ toast('El nombre es obligatorio', 'err'); return; }
+    if (price < 0 || stock < 0){ toast('Revisa precio y stock', 'err'); return; }
+
+    let imageUrl = pendingImageData;
+    if (pendingImageBlob && state.online){
+      try { imageUrl = await uploadImage('products', pendingImageBlob); }
+      catch(e){ console.warn(e); toast('Se sincronizará la imagen luego', 'err'); }
+    }
+
+    const payload = {
+      name, description: desc, price, stock,
+      image_url: imageUrl || null, active
+    };
+
+    if (isNew){
+      const tempId = 'temp_' + uid();
+      state.data.products.push({ id: tempId, ...payload, sort_order: state.data.products.length+1 });
+      saveCache();
+      enqueue({ type:'insert', table:'products', bucket:'products', payload: {...payload, id: tempId} });
+    } else {
+      const idx = state.data.products.findIndex(x => String(x.id) === String(p.id));
+      if (idx >= 0) state.data.products[idx] = { ...state.data.products[idx], ...payload };
+      saveCache();
+      enqueue({ type:'update', table:'products', bucket:'products', recordId: p.id, payload });
+    }
+
+    closeSheet();
+    renderTab();
+    toast(isNew ? 'Producto creado' : 'Producto actualizado', 'ok');
+    if (state.online) sync();
+  });
+
+  const delBtn = document.getElementById('btnDelete');
+  if (delBtn){
+    delBtn.addEventListener('click', () => {
+      if (!confirm('¿Eliminar este producto?')) return;
+      state.data.products = state.data.products.filter(x => String(x.id) !== String(p.id));
+      saveCache();
+      enqueue({ type:'delete', table:'products', recordId: p.id });
+      closeSheet();
+      renderTab();
+      toast('Producto eliminado', 'ok');
+      if (state.online) sync();
+    });
+  }
+}
+
+/* =========================================================
+   SHEET: CLIENTE
+   ========================================================= */
+function openClientSheet(phone){
+  const bookings = (state.data.bookings || [])
+    .filter(b => b.phone === phone)
+    .sort((a,b) => (b.booking_date+b.start_time).localeCompare(a.booking_date+a.start_time));
+
+  if (!bookings.length){
+    openSheet('Cliente', `<div class="empty">Sin datos</div>`);
+    return;
+  }
+
+  const c = bookings[0];
+  const totalSpent = bookings
+    .filter(b => b.status !== 'cancelled')
+    .reduce((s,b) => s + Number(b.service_price||0), 0);
+
+  const statusMap = {
+    pending:   ['warn','Pendiente'],
+    confirmed: ['ok','Confirmada'],
+    completed: ['blue','Completada'],
+    cancelled: ['bad','Cancelada'],
+    no_show:   ['grey','No asistió']
+  };
+
+  openSheet(`${c.first_name} ${c.last_name}`, `
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px">
+      <div class="avatar" style="width:56px;height:56px;font-size:18px">${initials(c.first_name, c.last_name)}</div>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#fff;margin-bottom:3px">+591 ${escapeHtml(phone)}</div>
+        <div style="font-size:12px;color:var(--muted)">${bookings.length} cita${bookings.length>1?'s':''} registradas</div>
+      </div>
+    </div>
+    <div class="stat-row" style="margin-bottom:22px">
+      <div class="stat">
+        <div class="stat-label">Total gastado</div>
+        <div class="stat-value">Bs ${totalSpent}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Última visita</div>
+        <div class="stat-value" style="font-size:18px">${fmtDateShort(bookings[0].booking_date)}</div>
+      </div>
+    </div>
+    <div class="section-label">Historial</div>
+    <div class="list" style="gap:8px">
+      ${bookings.map(b => {
+        const [cls, label] = statusMap[b.status] || ['grey', b.status];
+        const hasNote = b.notes && String(b.notes).trim();
+        return `
+          <div class="card" style="padding:12px">
+            <div class="bk-time" style="width:auto;min-width:60px">${fmtDateShort(b.booking_date)}<small>${String(b.start_time).slice(0,5)}</small></div>
+            <div class="card-body">
+              <div class="card-title" style="font-size:13px">${escapeHtml(b.service_name)}</div>
+              <div class="card-sub">Bs ${b.service_price}</div>
+              ${hasNote ? `<div class="bk-note">${escapeHtml(b.notes)}</div>` : ''}
+            </div>
+            <span class="badge ${cls}">${label}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="sheet-actions" style="grid-template-columns:1fr;margin-top:20px">
+      <a class="btn btn-ghost btn-full" style="text-align:center;text-decoration:none;display:block"
+         href="https://wa.me/591${escapeHtml(phone)}" target="_blank" rel="noopener">
+        Abrir en WhatsApp
+      </a>
+    </div>
+  `);
+}
+
+/* =========================================================
+   SHEET: BOOKING
+   ========================================================= */
+function openBookingSheet(bookingId){
+  const b = state.data.bookings.find(x => Number(x.id) === Number(bookingId));
+  if (!b) return;
+
+  const statusMap = {
+    pending:   ['warn','Pendiente'],
+    confirmed: ['ok','Confirmada'],
+    completed: ['blue','Completada'],
+    cancelled: ['bad','Cancelada'],
+    no_show:   ['grey','No asistió']
+  };
+  const [cls, label] = statusMap[b.status] || ['grey', b.status];
+  const hasNote = b.notes && String(b.notes).trim();
+
+  openSheet('Detalle de cita', `
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px">
+      <div class="avatar" style="width:56px;height:56px;font-size:18px">${initials(b.first_name, b.last_name)}</div>
+      <div>
+        <div style="font-size:16px;font-weight:500;color:#fff;margin-bottom:3px">${escapeHtml(b.first_name)} ${escapeHtml(b.last_name)}</div>
+        <div style="font-size:12px;color:var(--muted)">+591 ${escapeHtml(b.phone)}</div>
+      </div>
+      <span class="badge ${cls}" style="margin-left:auto">${label}</span>
+    </div>
+
+    <div class="stat-row" style="grid-template-columns:1fr 1fr;margin-bottom:18px">
+      <div class="stat">
+        <div class="stat-label">Fecha</div>
+        <div class="stat-value" style="font-size:16px">${fmtDateShort(b.booking_date)}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Hora</div>
+        <div class="stat-value" style="font-size:20px">${String(b.start_time).slice(0,5)}</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(b.service_name)}</div>
+        <div class="card-sub">${b.service_duration} min · Bs ${b.service_price}</div>
+      </div>
+    </div>
+
+    ${hasNote ? `
+      <div class="note-box">
+        <span class="nlabel">Nota del cliente</span>
+        ${escapeHtml(b.notes)}
+      </div>
+    ` : ''}
+
+    <div class="section-label">Cambiar estado</div>
+    <div class="sheet-actions" style="grid-template-columns:1fr 1fr;gap:8px">
+      ${['confirmed','completed','cancelled','pending'].map(s => {
+        const [c2, l2] = statusMap[s];
+        const dis = b.status === s ? 'disabled' : '';
+        return `<button class="btn btn-ghost" data-status="${s}" ${dis}>${l2}</button>`;
+      }).join('')}
+    </div>
+
+    <div class="sheet-actions" style="grid-template-columns:1fr;margin-top:14px">
+      <a class="btn btn-ghost btn-full" style="text-align:center;text-decoration:none;display:block"
+         href="https://wa.me/591${escapeHtml(b.phone)}?text=${encodeURIComponent(`Hola ${b.first_name}, sobre tu cita en NOIR BARBER del ${fmtDateShort(b.booking_date)} a las ${String(b.start_time).slice(0,5)}:`)}"
+         target="_blank" rel="noopener">
+        Contactar por WhatsApp
+      </a>
+    </div>
+  `);
+
+  sheetBodyEl.querySelectorAll('[data-status]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newStatus = btn.dataset.status;
+      if (newStatus === b.status) return;
+
+      const idx = state.data.bookings.findIndex(x => Number(x.id) === Number(b.id));
+      if (idx >= 0) state.data.bookings[idx].status = newStatus;
+      saveCache();
+
+      enqueue({
+        type:'update', table:'bookings', recordId: b.id, payload: { status: newStatus }
+      });
+
+      closeSheet();
+      renderTab();
+      toast('Estado actualizado', 'ok');
+      if (state.online) sync();
+    });
+  });
+}
+
+/* =========================================================
+   SHEET: NUEVA RESERVA MANUAL
+   ========================================================= */
+function openNewBookingSheet(){
+  const services = state.data.services.filter(s => s.active);
+  if (!services.length){
+    toast('Primero crea un servicio', 'err');
+    return;
+  }
+
+  openSheet('Nueva reserva', `
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Nombre</label>
+        <input type="text" id="bFn" />
+      </div>
+      <div class="field">
+        <label class="field-label">Apellido</label>
+        <input type="text" id="bLn" />
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Celular</label>
+      <input type="text" id="bPh" inputmode="numeric" maxlength="8"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Servicio</label>
+      <select id="bSvc">
+        ${services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — Bs ${s.price}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Fecha</label>
+        <input type="date" id="bDate" value="${state.selectedDate}"/>
+      </div>
+      <div class="field">
+        <label class="field-label">Hora (HH:MM)</label>
+        <input type="text" id="bTime" placeholder="10:00" value="10:00"/>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Nota (opcional)</label>
+      <textarea id="bNotes" rows="2" maxlength="200" placeholder="Ej: cliente prefiere máquina #2"></textarea>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-primary btn-full" id="bSave">Crear reserva</button>
+    </div>
+  `);
+
+  document.getElementById('bSave').addEventListener('click', async () => {
+    const fn = document.getElementById('bFn').value.trim();
+    const ln = document.getElementById('bLn').value.trim();
+    const ph = document.getElementById('bPh').value.trim();
+    const svcId = document.getElementById('bSvc').value;
+    const dt = document.getElementById('bDate').value;
+    const tm = document.getElementById('bTime').value.trim();
+    const notes = document.getElementById('bNotes').value.trim();
+
+    if (!fn || !ln || !ph || !dt || !/^\d{1,2}:\d{2}$/.test(tm)){
+      toast('Revisa los datos', 'err'); return;
+    }
+    const svc = services.find(s => String(s.id) === String(svcId));
+    const [h,m] = tm.split(':').map(Number);
+    const endH = Math.floor((h*60+m+svc.duration_min)/60);
+    const endM = (h*60+m+svc.duration_min)%60;
+    const endTime = `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}`;
+    const startTime = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+    const payload = {
+      first_name: fn, last_name: ln, phone: ph,
+      service_id: svc.id, service_name: svc.name,
+      service_price: svc.price, service_duration: svc.duration_min,
+      booking_date: dt, start_time: startTime, end_time: endTime,
+      status: 'confirmed',
+      notes: notes || null
+    };
+
+    const tempId = 'temp_' + uid();
+    state.data.bookings.push({ id: tempId, ...payload });
+    saveCache();
+    enqueue({ type:'insert', table:'bookings', payload: { ...payload, id: tempId } });
+
+    closeSheet();
+    state.selectedDate = dt;
+    renderTab();
+    toast('Reserva creada', 'ok');
+    if (state.online) sync();
+  });
+}
+
+/* =========================================================
+   ONLINE / OFFLINE
+   ========================================================= */
+window.addEventListener('online', () => {
+  state.online = true;
+  updateStatus();
+  toast('Conexión restaurada', 'ok');
+  sync();
+});
+window.addEventListener('offline', () => {
+  state.online = false;
+  updateStatus();
+  toast('Sin conexión · modo offline', 'err');
+});
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+async function checkAdmin(){
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return false;
+  const { data, error } = await sb.from('admin_users').select('user_id').eq('user_id', user.id).maybeSingle();
+  if (error) console.warn(error);
+  return !!data;
+}
+
+function setAuthMode(mode){
+  authMode = mode;
+  const title = document.getElementById('authTitle');
+  const hint = document.getElementById('loginHint');
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  const tabs = document.getElementById('authTabs');
+  const passInput = document.getElementById('loginPassword');
+
+  errEl.textContent = '';
+
+  if (mode === 'setup'){
+    title.textContent = 'PRIMER ACCESO';
+    btn.textContent = 'Crear administrador';
+    hint.textContent = 'Aún no existe un administrador. Esta cuenta será la principal y única del sistema.';
+    tabs.hidden = true;
+    passInput.setAttribute('autocomplete','new-password');
+    return;
+  }
+
+  tabs.hidden = false;
+  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
+
+  if (mode === 'login'){
+    title.textContent = 'ACCESO';
+    btn.textContent = 'Entrar';
+    hint.textContent = '';
+    passInput.setAttribute('autocomplete','current-password');
+  } else {
+    title.textContent = 'CREAR CUENTA';
+    btn.textContent = 'Crear cuenta';
+    hint.textContent = 'Solo el primer registro puede ser administrador.';
+    passInput.setAttribute('autocomplete','new-password');
+  }
+}
+
+document.getElementById('tabLogin').addEventListener('click', () => setAuthMode('login'));
+document.getElementById('tabRegister').addEventListener('click', () => setAuthMode('register'));
+
+async function bootstrap(){
+  loadCache();
+  updateStatus();
+
+  let adminExists = true;
+  try {
+    const { data, error } = await sb.rpc('admin_exists');
+    if (!error) adminExists = !!data;
+  } catch(_){}
+
+  if (!adminExists){
+    showLogin();
+    setAuthMode('setup');
+    return;
+  }
+
+  setAuthMode('login');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){
+    showLogin();
+    return;
+  }
+  const ok = await checkAdmin();
+  if (!ok){
+    await sb.auth.signOut();
+    showLogin('Tu cuenta no tiene permisos de administrador');
+    return;
+  }
+  await enterApp();
+}
+
+function showLogin(errMsg){
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appScreen').classList.remove('ready');
+  if (errMsg) document.getElementById('loginError').textContent = errMsg;
+}
+
+async function enterApp(){
+  state.isAdmin = true;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.add('ready');
+  renderTab();
+  if (state.online) sync();
+
+  // Push notifications (solo en app nativa)
+  if (typeof window.__initPushNotifications === 'function') {
+    window.__initPushNotifications();
+  }
+}
+
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  const originalText = btn.textContent;
+
+  btn.disabled = true;
+  btn.textContent = authMode === 'login' ? 'Entrando…' : 'Creando…';
+  errEl.textContent = '';
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+
+  try {
+    if (authMode === 'login'){
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password: pass });
+      if (error) throw error;
+
+      if (!data.session){
+        errEl.textContent = 'Revisa tu email para confirmar la cuenta, luego inicia sesión.';
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return;
+      }
+
+      const { error: claimErr } = await sb.rpc('claim_first_admin');
+      if (claimErr) throw claimErr;
+    }
+
+    const ok = await checkAdmin();
+    if (!ok){
+      await sb.auth.signOut();
+      throw new Error('Tu cuenta no tiene permisos de administrador');
+    }
+
+    btn.disabled = false;
+    btn.textContent = originalText;
+    await enterApp();
+  } catch (e){
+    console.error(e);
+    let msg = e.message || 'Error inesperado';
+    if (msg.includes('ADMIN_ALREADY_EXISTS')) msg = 'Ya existe un administrador registrado';
+    else if (msg.includes('Invalid login')) msg = 'Email o contraseña incorrectos';
+    else if (msg.includes('already registered')) msg = 'Este email ya está registrado';
+    else if (msg.includes('User already registered')) msg = 'Este email ya está registrado';
+    else if (msg.includes('Password should be at least')) msg = 'La contraseña debe tener al menos 6 caracteres';
+    else if (msg.includes('Unable to validate email')) msg = 'Email inválido';
+    errEl.textContent = msg;
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+});
+
+/* Logout */
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  if (!confirm('¿Cerrar sesión?')) return;
+  await sb.auth.signOut();
+  state.isAdmin = false;
+  document.getElementById('appScreen').classList.remove('ready');
+  showLogin();
+  setAuthMode('login');
+  document.getElementById('loginPassword').value = '';
+});
+
+/* Re-sync periódico */
+setInterval(() => {
+  if (state.online && state.isAdmin && state.queue.length > 0) sync();
+}, 60000);
+
+/* =========================================================
+   NOTIFICACIONES PUSH · Permiso + registro de token
+   ========================================================= */
+async function initPushNotifications() {
+  if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) {
+    console.log('[Push] Web detectada, no se piden notificaciones');
+    return;
+  }
+
+  try {
+    const { FirebaseMessaging } = Capacitor.Plugins;
+    if (!FirebaseMessaging) {
+      console.warn('[Push] Plugin de Firebase Messaging no disponible');
+      return;
+    }
+
+    // 1. Pedir permiso
+    const perm = await FirebaseMessaging.requestPermissions();
+    console.log('[Push] Permiso:', perm.receive);
+    if (perm.receive !== 'granted') {
+      console.warn('[Push] Permiso denegado por el usuario');
+      return;
+    }
+
+    // 2. Escuchar token cuando llegue
+    FirebaseMessaging.addListener('tokenReceived', async (event) => {
+      console.log('[Push] Token recibido:', event.token);
+      await saveTokenToSupabase(event.token);
+    });
+
+    // 3. Obtener token directo
+    const { token } = await FirebaseMessaging.getToken();
+    if (token) {
+      console.log('[Push] Token inicial:', token);
+      await saveTokenToSupabase(token);
+    }
+
+    // 4. Notificación en foreground
+    FirebaseMessaging.addListener('notificationReceived', (event) => {
+      console.log('[Push] Foreground:', event.notification);
+      if (typeof toast === 'function') {
+        toast((event.notification.title || '') + ' · ' + (event.notification.body || ''), 'ok');
+      }
+    });
+
+    // 5. Usuario tocó la notificación
+    FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+      console.log('[Push] Tap:', event.notification);
+      // Redirigir a Calendario
+      if (typeof state !== 'undefined') {
+        state.tab = 'calendario';
+        document.querySelectorAll('.tab').forEach(x =>
+          x.classList.toggle('active', x.dataset.tab === 'calendario'));
+        const pt = document.getElementById('pageTitle');
+        if (pt) pt.textContent = 'Calendario';
+        if (typeof renderTab === 'function') renderTab();
+      }
+    });
+
+  } catch (err) {
+    console.error('[Push] Error configurando notificaciones:', err);
+  }
+}
+
+/* Guarda token FCM asociado al admin logueado */
+async function saveTokenToSupabase(token) {
+  try {
+    if (typeof sb === 'undefined') return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+      console.warn('[Push] Sin usuario logueado, token no guardado aún');
+      return;
+    }
+    const platform = (typeof Capacitor !== 'undefined' && Capacitor.getPlatform)
+      ? Capacitor.getPlatform()
+      : 'unknown';
+
+    const { error } = await sb.from('device_tokens').upsert({
+      user_id: user.id,
+      token: token,
+      platform: platform,
+      active: true,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'token' });
+
+    if (error) console.warn('[Push] Error guardando token:', error);
+    else console.log('[Push] Token guardado en Supabase ✓');
+  } catch (e) {
+    console.warn('[Push] Excepción guardando token:', e);
+  }
+}
+
+// Exponer globalmente para llamarla desde enterApp
+window.__initPushNotifications = initPushNotifications;
+
+/* =========================================================
+   INIT
+   ========================================================= */
+bootstrap();
+</script>
+
+</body>
+</html>
