@@ -3796,7 +3796,48 @@ async function loadDashboard(){
   try {
     const { data, error } = await sb.rpc('get_client_dashboard');
     if (error) throw error;
-    dashboardData = data;
+    dashboardData = data || {};
+
+    /*
+     * Los datos personales del perfil deben salir de public.clients.
+     * No dependemos únicamente de get_client_dashboard para nombre,
+     * cumpleaños y celular, porque ese RPC puede devolver un objeto client
+     * incompleto según su definición actual.
+     */
+    if (currentUser?.id){
+      const { data: ownClient, error: clientError } = await sb
+        .from('clients')
+        .select('id, phone, first_name, last_name, birth_date, preferred_barber_id, preferences, loyalty_points, loyalty_tier, total_visits, total_spent, notify_whatsapp, notify_push, created_at, updated_at, last_visit_at')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (!clientError && ownClient){
+        dashboardData.client = {
+          ...(dashboardData.client || {}),
+          ...ownClient
+        };
+      }
+
+      /*
+       * Si todavía no hay nombre en clients, buscamos la referencia de la
+       * reserva hecha con el mismo celular. Esto NO impide editar el nombre:
+       * solamente rellena el perfil cuando está vacío.
+       */
+      const c = dashboardData.client || {};
+      if ((!c.first_name || !c.last_name) && c.phone && /^[67]\d{7}$/.test(c.phone)){
+        try {
+          const { data: info } = await sb.rpc('get_client_info', { p_phone: c.phone });
+          if (info && info.length){
+            const reservationClient = info[0] || {};
+            if (!c.first_name && reservationClient.first_name) c.first_name = String(reservationClient.first_name).trim();
+            if (!c.last_name && reservationClient.last_name) c.last_name = String(reservationClient.last_name).trim();
+          }
+        } catch (refError){
+          debugLog('warn', 'No se pudo obtener nombre de referencia por celular', refError?.message || '');
+        }
+      }
+    }
+
     renderDashboard();
   } catch (e){
     debugLog('error', 'Error cargando dashboard', e.message);
@@ -3999,7 +4040,7 @@ function renderProfile(c){
       <div class="ic"><svg><use href="#i-user"/></svg></div>
       <div class="txt">
         <div class="lbl">Nombre</div>
-        <div class="val">${escapeHtml((c.first_name||'') + ' ' + (c.last_name||'')).trim() || '—'}</div>
+        <div class="val">${escapeHtml((c.first_name||'') + ' ' + (c.last_name||'')).trim() || 'No definido'}</div>
       </div>
     </div>
     <div class="profile-row">
@@ -4026,6 +4067,14 @@ function renderProfile(c){
         <div class="val">${escapeHtml(tierLabel)}</div>
       </div>
     </div>
+
+    <div style="width:100%;max-width:520px;margin-top:18px">
+      <button class="btn ghost" onclick="openProfileEditor()">
+        <svg><use href="#i-edit"/></svg>
+        <span>Editar datos personales</span>
+      </button>
+    </div>
+
     ${passkeySupported ? `
     <div class="profile-row">
       <div class="ic"><svg><use href="#i-fingerprint"/></svg></div>
