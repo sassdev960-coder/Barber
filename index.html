@@ -1381,6 +1381,85 @@
     .fingerprint-hero::after,
     .phone-hero{ animation:none; }
   }
+
+  /* =========================================================
+     PRIVACIDAD / TRANSPARENCIA / PERFIL EDITABLE
+     ========================================================= */
+  .policy-body,.edit-profile-body{
+    width:100%; max-width:560px;
+    display:flex; flex-direction:column; gap:14px;
+    padding-bottom:var(--safe-bottom);
+  }
+  .policy-hero{
+    width:100%;
+    background:linear-gradient(180deg,rgba(217,178,115,.09),rgba(217,178,115,.02));
+    border:1px solid var(--gold-border); border-radius:14px;
+    padding:18px; margin-bottom:2px;
+  }
+  .policy-hero .ic{
+    width:42px;height:42px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--gold-dim);border:1px solid var(--gold-border);
+    color:var(--gold);margin-bottom:12px;
+  }
+  .policy-hero .ic svg{width:21px;height:21px}
+  .policy-hero h2{
+    font-family:'Playfair Display',serif;font-size:23px;font-weight:500;
+    color:#fff;margin-bottom:7px;
+  }
+  .policy-hero p{font-size:12.5px;line-height:1.6;color:var(--text-2)}
+  .policy-card{
+    width:100%;background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:16px;
+  }
+  .policy-card h3{
+    font-family:'Playfair Display',serif;font-size:16px;font-weight:500;
+    color:#fff;margin-bottom:9px;
+  }
+  .policy-card p,.policy-card li{
+    font-size:12px;line-height:1.65;color:var(--text-2);
+  }
+  .policy-card ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+  .policy-card strong{color:#fff;font-weight:500}
+  .policy-card .data-tag{
+    display:inline-flex;padding:4px 8px;border:1px solid var(--border-2);
+    border-radius:7px;color:var(--gold-2);font-size:10px;margin:3px 4px 3px 0;
+  }
+  .policy-note{
+    border-left:2px solid var(--gold);padding-left:12px;
+    font-size:11px!important;color:var(--muted)!important;
+  }
+  .policy-actions{display:flex;flex-direction:column;gap:10px}
+  .policy-link-btn{
+    width:100%;background:transparent;border:1px solid var(--border-2);
+    color:var(--text-2);border-radius:10px;padding:12px 14px;
+    font-family:inherit;font-size:12px;cursor:pointer;text-align:left;
+    transition:all .2s ease;
+  }
+  .policy-link-btn:hover{border-color:var(--gold-border);color:var(--gold)}
+  .policy-footer{
+    font-size:10.5px;color:var(--muted);line-height:1.6;text-align:center;
+    padding:2px 8px 10px;
+  }
+  .profile-edit-note{
+    font-size:11px;color:var(--muted);line-height:1.55;
+    margin-top:-4px;margin-bottom:4px;
+  }
+  .profile-edit-grid{display:flex;flex-direction:column;gap:12px}
+  .profile-edit-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+  .readonly-field{opacity:.65}
+  .readonly-field .field-input{cursor:not-allowed}
+  .privacy-check{
+    width:100%;display:flex;gap:10px;align-items:flex-start;
+    margin-top:2px;padding:12px 13px;border:1px solid var(--border);
+    border-radius:10px;background:rgba(255,255,255,.015);
+  }
+  .privacy-check input{margin-top:2px;accent-color:var(--gold);flex-shrink:0}
+  .privacy-check label{font-size:11px;line-height:1.5;color:var(--text-2);cursor:pointer}
+  .privacy-check button{
+    background:none;border:0;color:var(--gold);font:inherit;cursor:pointer;padding:0
+  }
+
 </style>
 </head>
 <body>
@@ -1511,8 +1590,8 @@
     <div class="cover-bg"></div>
 
     <div class="cover-settings">
-      <button onclick="openDebugConsole()" aria-label="Consola de diagnóstico">
-        <svg><use href="#i-settings"/></svg>
+      <button onclick="openPrivacyCenter()" aria-label="Privacidad y configuración de datos">
+        <svg><use href="#i-shield"/></svg>
       </button>
     </div>
 
@@ -1597,6 +1676,14 @@
       </div>
 
       <p class="form-error" id="formError" role="alert"></p>
+
+      <div class="privacy-check">
+        <input type="checkbox" id="bookingPrivacyCheck"/>
+        <label for="bookingPrivacyCheck">
+          He leído la <button type="button" onclick="openPrivacyCenter()">Política de privacidad y uso de datos</button>.
+          Entiendo que BARBERLINK utilizará los datos necesarios para gestionar mi reserva, mi cuenta y la atención relacionada.
+        </label>
+      </div>
 
       <div class="welcome" id="welcomeBox">
         <div class="welcome-title">● BIENVENIDO DE NUEVO</div>
@@ -2130,6 +2217,256 @@
         <button class="btn ghost" onclick="skipPhoneOnboarding()">
           <span>Omitir por ahora</span>
         </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======================== PRIVACIDAD Y DATOS ======================== -->
+  <section class="screen" data-step="11">
+    <header class="screen-head">
+      <button class="icon-btn" onclick="closePrivacyCenter()" aria-label="Atrás">
+        <svg><use href="#i-arrow-left"/></svg>
+      </button>
+      <h1 class="screen-title">Privacidad y datos</h1>
+      <div class="mini-brand" aria-hidden="true">
+        <svg><use href="#i-shield"/></svg>
+        <span>BARBERLINK</span>
+      </div>
+    </header>
+
+    <div class="policy-body">
+      <div class="policy-hero">
+        <div class="ic"><svg><use href="#i-shield"/></svg></div>
+        <h2>Información clara sobre tus datos</h2>
+        <p>
+          Esta sección explica qué información puede utilizar BARBERLINK,
+          por qué se utiliza, con qué servicios puede procesarse y qué controles
+          tienes sobre tu perfil.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>1. ¿Qué datos utilizamos?</h3>
+        <p>Dependiendo de las funciones que uses, podemos gestionar:</p>
+        <div style="margin-top:8px">
+          <span class="data-tag">Nombre y apellido</span>
+          <span class="data-tag">Celular</span>
+          <span class="data-tag">Correo electrónico</span>
+          <span class="data-tag">Fecha de nacimiento</span>
+          <span class="data-tag">Reservas</span>
+          <span class="data-tag">Servicio elegido</span>
+          <span class="data-tag">Fecha y hora</span>
+          <span class="data-tag">Notas de la reserva</span>
+          <span class="data-tag">Puntos y nivel</span>
+          <span class="data-tag">Estado de cuenta</span>
+        </div>
+        <p style="margin-top:10px">
+          Los datos de autenticación y las credenciales de acceso se gestionan
+          mediante el sistema de autenticación configurado para BARBERLINK.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>2. ¿Para qué se utilizan?</h3>
+        <ul>
+          <li>Crear, confirmar y administrar tus reservas.</li>
+          <li>Identificar tu cuenta y permitir el acceso mediante celular, correo u otros métodos habilitados.</li>
+          <li>Vincular reservas anteriores realizadas con el mismo número de celular.</li>
+          <li>Mostrar tu historial, visitas, puntos y recompensas.</li>
+          <li>Contactarte respecto de una reserva o de la atención solicitada.</li>
+          <li>Prevenir errores, abusos y problemas de seguridad.</li>
+          <li>Diagnosticar fallos técnicos cuando se utilicen herramientas de diagnóstico.</li>
+        </ul>
+      </div>
+
+      <div class="policy-card">
+        <h3>3. ¿Dónde se procesan?</h3>
+        <p>
+          La aplicación utiliza <strong>Supabase</strong> para autenticación,
+          almacenamiento de datos y operaciones de la aplicación. Por ello,
+          la información necesaria para esas funciones se transmite a la
+          infraestructura configurada para el proyecto.
+        </p>
+        <p style="margin-top:9px">
+          La aplicación también carga recursos externos, como la biblioteca
+          de Supabase y fuentes web. Esos servicios pueden recibir información
+          técnica necesaria para realizar las solicitudes correspondientes.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>4. WhatsApp y comunicaciones</h3>
+        <p>
+          La interfaz informa que las confirmaciones pueden enviarse por
+          WhatsApp. Cuando se utilice un proveedor de mensajería, el número
+          y la información estrictamente necesaria para la comunicación
+          podrán procesarse a través de ese servicio.
+        </p>
+        <p class="policy-note" style="margin-top:10px">
+          Esta pantalla no inventa un proveedor específico: debe identificarse
+          aquí el proveedor real que el negocio utilice antes de publicar
+          oficialmente esta política.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>5. Huella / Passkey</h3>
+        <p>
+          Si activas el acceso con passkey, BARBERLINK solicita al dispositivo
+          que realice la verificación biométrica mediante WebAuthn. La huella
+          biométrica en sí no se introduce en el formulario de BARBERLINK.
+          La aplicación recibe el resultado de autenticación y la credencial
+          necesaria para el acceso.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>6. Tú controlas tu perfil</h3>
+        <p>
+          Puedes revisar y solicitar la actualización de los datos editables
+          desde <strong>Mi cuenta → Perfil → Editar perfil</strong>. Los datos
+          necesarios para mantener una reserva o cumplir obligaciones
+          aplicables pueden requerir tratamiento adicional o conservación
+          durante el tiempo correspondiente.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>7. Eliminación y solicitudes</h3>
+        <p>
+          Si quieres solicitar corrección, acceso o eliminación de información,
+          utiliza el canal de contacto que el negocio publique para BARBERLINK.
+          La eliminación de una cuenta no debe entenderse automáticamente como
+          eliminación inmediata de información que sea necesaria para una
+          reserva pendiente, comprobante, seguridad o cumplimiento legal.
+        </p>
+      </div>
+
+      <div class="policy-card">
+        <h3>8. Transparencia técnica</h3>
+        <p>
+          BARBERLINK registra en el navegador ciertos eventos técnicos de
+          diagnóstico para ayudar a detectar errores. Estos registros no deben
+          utilizarse como sustituto de una política de privacidad ni deben
+          contener contraseñas, códigos OTP o datos biométricos.
+        </p>
+      </div>
+
+      <div class="policy-actions">
+        <button class="policy-link-btn" onclick="openProfileEditor()">
+          <strong>Editar mis datos</strong><br/>
+          <span>Actualizar nombre, apellido, fecha de nacimiento y celular.</span>
+        </button>
+        <button class="policy-link-btn" onclick="openDebugConsole()">
+          <strong>Diagnóstico técnico</strong><br/>
+          <span>Herramienta para revisar el funcionamiento de la aplicación.</span>
+        </button>
+      </div>
+
+      <div class="policy-footer">
+        Última actualización de esta pantalla: 2 de octubre de 2026.<br/>
+        Este texto es una capa informativa de la aplicación. Antes de publicar
+        BARBERLINK, el negocio debe completar los datos reales del responsable,
+        canal de contacto, proveedor de mensajería y demás información legal
+        que corresponda.
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== EDITAR PERFIL ======================== -->
+  <section class="screen" data-step="12">
+    <header class="screen-head">
+      <button class="icon-btn" onclick="closeProfileEditor()" aria-label="Atrás">
+        <svg><use href="#i-arrow-left"/></svg>
+      </button>
+      <h1 class="screen-title">Editar perfil</h1>
+      <div class="mini-brand" aria-hidden="true">
+        <svg><use href="#i-user-circle"/></svg>
+        <span>BARBERLINK</span>
+      </div>
+    </header>
+
+    <div class="edit-profile-body">
+      <div class="section-heading" style="margin-bottom:10px">
+        <h2>Tu información</h2>
+        <p class="ruled">Tú decides cuándo actualizarla</p>
+      </div>
+
+      <p class="profile-edit-note">
+        Modifica solamente los datos que quieras mantener actualizados.
+        El celular puede utilizarse para vincular reservas realizadas antes
+        de crear tu cuenta.
+      </p>
+
+      <div class="profile-edit-grid">
+        <label class="field" for="editFirstName">
+          <svg class="f-icon"><use href="#i-user"/></svg>
+          <div class="field-body">
+            <span class="field-label">Nombre</span>
+            <input class="field-input" type="text" id="editFirstName"
+                   maxlength="80" autocomplete="given-name" placeholder="Tu nombre"/>
+          </div>
+        </label>
+
+        <label class="field" for="editLastName">
+          <svg class="f-icon"><use href="#i-user"/></svg>
+          <div class="field-body">
+            <span class="field-label">Apellido</span>
+            <input class="field-input" type="text" id="editLastName"
+                   maxlength="100" autocomplete="family-name" placeholder="Tu apellido"/>
+          </div>
+        </label>
+
+        <label class="field" for="editBirthDate">
+          <svg class="f-icon"><use href="#i-calendar"/></svg>
+          <div class="field-body">
+            <span class="field-label">Fecha de nacimiento</span>
+            <input class="field-input" type="date" id="editBirthDate"/>
+          </div>
+        </label>
+
+        <label class="field phone-field" for="editPhone">
+          <svg class="f-icon"><use href="#i-phone"/></svg>
+          <div class="field-body">
+            <span class="field-label">Celular</span>
+            <div style="display:flex;align-items:center">
+              <span class="phone-prefix">+591</span>
+              <input class="field-input" type="tel" id="editPhone"
+                     inputmode="numeric" maxlength="8" autocomplete="tel-national"
+                     placeholder="70123456"/>
+            </div>
+          </div>
+        </label>
+
+        <label class="field readonly-field" for="editEmail">
+          <svg class="f-icon"><use href="#i-mail"/></svg>
+          <div class="field-body">
+            <span class="field-label">Correo de acceso</span>
+            <input class="field-input" type="email" id="editEmail" readonly
+                   placeholder="No configurado"/>
+          </div>
+        </label>
+      </div>
+
+      <p class="form-error" id="profileEditError" role="alert"></p>
+      <p class="form-success" id="profileEditSuccess" role="status"></p>
+
+      <div class="profile-edit-actions">
+        <button class="btn" id="btnSaveProfile" onclick="saveProfileChanges()">
+          <svg><use href="#i-check"/></svg>
+          <span>Guardar cambios</span>
+        </button>
+        <button class="btn ghost" onclick="closeProfileEditor()">Cancelar</button>
+      </div>
+
+      <div class="policy-card" style="margin-top:4px">
+        <h3>Importante</h3>
+        <p>
+          El nivel, puntos, visitas, historial de reservas y estados de las
+          reservas son información generada por el sistema y no se pueden
+          modificar desde este formulario.
+        </p>
       </div>
     </div>
   </section>
@@ -3236,6 +3573,148 @@ async function onLoginSuccess(){
   }
 }
 
+
+/* =========================================================
+   PRIVACIDAD / DATOS / PERFIL EDITABLE
+   ========================================================= */
+function openPrivacyCenter(){
+  showStep(11);
+}
+
+function closePrivacyCenter(){
+  if (currentUser){
+    showStep(7);
+    setTimeout(() => switchTab('profile'), 120);
+  } else {
+    showStep(0);
+  }
+}
+
+function openProfileEditor(){
+  if (!currentUser){
+    showGlobalError('Inicia sesión para editar tu perfil.');
+    return;
+  }
+
+  const c = dashboardData?.client || {};
+  document.getElementById('editFirstName').value = c.first_name || '';
+  document.getElementById('editLastName').value  = c.last_name || '';
+  document.getElementById('editBirthDate').value = c.birth_date || '';
+  document.getElementById('editPhone').value     = c.phone || '';
+  document.getElementById('editEmail').value     = currentUser.email || '';
+
+  document.getElementById('profileEditError').classList.remove('visible');
+  document.getElementById('profileEditSuccess').classList.remove('visible');
+  showStep(12);
+}
+
+function closeProfileEditor(){
+  showStep(7);
+  setTimeout(() => switchTab('profile'), 120);
+}
+
+function showProfileEditError(msg){
+  const e = document.getElementById('profileEditError');
+  e.textContent = msg;
+  e.classList.add('visible');
+  document.getElementById('profileEditSuccess').classList.remove('visible');
+}
+
+function showProfileEditSuccess(msg){
+  const e = document.getElementById('profileEditSuccess');
+  e.textContent = msg;
+  e.classList.add('visible');
+  document.getElementById('profileEditError').classList.remove('visible');
+}
+
+function validateProfileFields(){
+  const first = document.getElementById('editFirstName').value.trim();
+  const last  = document.getElementById('editLastName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const birth = document.getElementById('editBirthDate').value;
+
+  if (!first) return 'Escribe tu nombre.';
+  if (first.length > 80) return 'El nombre es demasiado largo.';
+  if (last.length > 100) return 'El apellido es demasiado largo.';
+  if (phone && !/^[67]\d{7}$/.test(phone)){
+    return 'El celular debe tener 8 dígitos y empezar en 6 o 7.';
+  }
+  if (birth){
+    const d = new Date(birth + 'T00:00:00');
+    if (Number.isNaN(d.getTime()) || d > new Date()){
+      return 'La fecha de nacimiento no es válida.';
+    }
+  }
+  return null;
+}
+
+async function saveProfileChanges(){
+  if (!currentUser){
+    showProfileEditError('Tu sesión expiró. Vuelve a entrar.');
+    return;
+  }
+
+  const validation = validateProfileFields();
+  if (validation){
+    showProfileEditError(validation);
+    return;
+  }
+
+  const btn = document.getElementById('btnSaveProfile');
+  const label = btn.querySelector('span');
+  const original = label.textContent;
+  btn.disabled = true;
+  label.textContent = 'Guardando…';
+
+  const first = document.getElementById('editFirstName').value.trim();
+  const last  = document.getElementById('editLastName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const birth = document.getElementById('editBirthDate').value || null;
+
+  try {
+    /*
+     * La función existente update_my_profile ya se usa para guardar el
+     * celular. La versión ampliada debe aceptar los cuatro parámetros.
+     * Si el backend todavía solo acepta p_phone, mostramos un error claro
+     * en lugar de fingir que los cambios fueron guardados.
+     */
+    const { error } = await sb.rpc('update_my_profile', {
+      p_first_name: first,
+      p_last_name: last || null,
+      p_birth_date: birth,
+      p_phone: phone || null
+    });
+
+    if (error) throw error;
+
+    await loadDashboard();
+    showProfileEditSuccess('Perfil actualizado correctamente.');
+    setTimeout(() => {
+      if (currentStep === 12) closeProfileEditor();
+    }, 650);
+  } catch (e){
+    debugLog('error', 'Error actualizando perfil', {
+      code: e?.code || '',
+      message: e?.message || String(e)
+    });
+
+    const msg = String(e?.message || '').toLowerCase();
+
+    if (msg.includes('function') && msg.includes('does not exist')){
+      showProfileEditError(
+        'El panel está listo, pero Supabase todavía necesita actualizar la función update_my_profile para aceptar nombre, apellido y fecha de nacimiento.'
+      );
+    } else if (msg.includes('not_authenticated')){
+      showProfileEditError('Sesión expirada. Vuelve a entrar.');
+    } else {
+      showProfileEditError('No pudimos guardar los cambios. Revisa la configuración de Supabase.');
+    }
+  } finally {
+    btn.disabled = false;
+    label.textContent = original;
+  }
+}
+
 /* =========================================================
    LOGOUT
    ========================================================= */
@@ -4190,6 +4669,8 @@ function resetAll(){
   document.getElementById('fullName').value = '';
   document.getElementById('phone').value = '';
   document.getElementById('notesInput').value = '';
+  const privacyCheck = document.getElementById('bookingPrivacyCheck');
+  if (privacyCheck) privacyCheck.checked = false;
   document.getElementById('welcomeBox').classList.remove('visible');
   document.querySelectorAll('.field').forEach(f => f.classList.remove('invalid'));
   clearError();
@@ -4340,6 +4821,18 @@ document.getElementById('authPhone').addEventListener('keydown', e => {
 });
 document.getElementById('authEmail').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); sendOtp(); }
+});
+
+/* Listener para edición de perfil */
+document.getElementById('editPhone').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g,'').slice(0,8);
+  e.target.closest('.field').classList.remove('invalid');
+});
+document.getElementById('editFirstName').addEventListener('input', e => {
+  e.target.closest('.field').classList.remove('invalid');
+});
+document.getElementById('editLastName').addEventListener('input', e => {
+  e.target.closest('.field').classList.remove('invalid');
 });
 
 /* Listener para el input de teléfono de onboarding */
