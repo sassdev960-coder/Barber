@@ -2395,8 +2395,10 @@
 
       <p class="profile-edit-note">
         Modifica solamente los datos que quieras mantener actualizados.
-        El celular puede utilizarse para vincular reservas realizadas antes
-        de crear tu cuenta.
+        Si tu cuenta fue creada a partir de una reserva, el nombre puede
+        aparecer inicialmente tomando como referencia esa reserva y el
+        número de celular asociado. Puedes cambiarlo cuando quieras.
+        También puedes registrar o modificar tu fecha de nacimiento.
       </p>
 
       <div class="profile-edit-grid">
@@ -3590,17 +3592,41 @@ function closePrivacyCenter(){
   }
 }
 
-function openProfileEditor(){
+async function openProfileEditor(){
   if (!currentUser){
     showGlobalError('Inicia sesión para editar tu perfil.');
     return;
   }
 
   const c = dashboardData?.client || {};
-  document.getElementById('editFirstName').value = c.first_name || '';
-  document.getElementById('editLastName').value  = c.last_name || '';
+  let firstName = (c.first_name || '').trim();
+  let lastName  = (c.last_name || '').trim();
+  let phone     = (c.phone || '').trim();
+
+  /*
+   * Si el perfil todavía no tiene nombre, usamos como referencia el nombre
+   * registrado en una reserva hecha con el mismo número. Esto permite que
+   * un cliente recurrente vea automáticamente el nombre con el que reservó.
+   * El dato solo se usa como valor inicial del formulario: el cliente puede
+   * editarlo libremente antes de guardar.
+   */
+  if ((!firstName || !lastName) && phone && /^[67]\d{7}$/.test(phone)){
+    try {
+      const { data: info } = await sb.rpc('get_client_info', { p_phone: phone });
+      if (info && info.length){
+        const reservationClient = info[0] || {};
+        if (!firstName) firstName = String(reservationClient.first_name || '').trim();
+        if (!lastName)  lastName  = String(reservationClient.last_name || '').trim();
+      }
+    } catch (e){
+      debugLog('warn', 'No se pudo obtener el nombre de referencia por celular', e?.message || '');
+    }
+  }
+
+  document.getElementById('editFirstName').value = firstName;
+  document.getElementById('editLastName').value  = lastName;
   document.getElementById('editBirthDate').value = c.birth_date || '';
-  document.getElementById('editPhone').value     = c.phone || '';
+  document.getElementById('editPhone').value     = phone;
   document.getElementById('editEmail').value     = currentUser.email || '';
 
   document.getElementById('profileEditError').classList.remove('visible');
