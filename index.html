@@ -668,17 +668,6 @@
     color:var(--gold);
   }
 
-  .passkey-badge{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:10px; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--gold); font-weight:600;
-    background:rgba(217,178,115,.10);
-    border:1px solid var(--gold-border);
-    padding:4px 10px; border-radius:20px;
-    margin-bottom:12px;
-  }
-  .passkey-badge svg{ width:12px; height:12px; }
-
   .otp-inputs{
     display:flex; gap:8px; justify-content:center;
     margin:24px 0 14px;
@@ -714,6 +703,17 @@
     letter-spacing:.05em;
   }
   .auth-back button:hover{ color:#fff; }
+
+  .email-help{
+    width:100%; max-width:520px;
+    font-size:12px; color:var(--muted);
+    line-height:1.6; margin-top:18px;
+    padding:14px 16px;
+    background:rgba(217,178,115,.05);
+    border:1px solid rgba(217,178,115,.20);
+    border-radius:10px; text-align:left;
+  }
+  .email-help strong{ color:var(--gold); font-weight:500; }
 
   .dash-hero{
     width:100%; max-width:520px;
@@ -1139,7 +1139,6 @@
     <path d="M19 14v1a3 3 0 0 1-3 3"/>
     <path d="M5 11a8 8 0 0 1 5-7"/>
     <path d="M19 11a8 8 0 0 0-8-8"/>
-    <path d="M12 3v0"/>
     <path d="M9 20a4 4 0 0 1-4-4"/>
     <path d="M15 20a4 4 0 0 0 4-4v-1"/>
   </symbol>
@@ -1493,7 +1492,6 @@
           <p>Elige cómo quieres identificarte</p>
         </div>
 
-        <!-- Botón de Passkey (huella/Face ID) - solo si el navegador lo soporta -->
         <div id="passkeyLoginBlock" style="display:none; width:100%; max-width:520px">
           <button class="btn btn-passkey" onclick="loginWithPasskey()" id="btnPasskeyLogin">
             <svg class="fingerprint"><use href="#i-fingerprint"/></svg>
@@ -1538,7 +1536,7 @@
 
         <div class="nav-buttons" style="margin-top:14px">
           <button class="btn" id="btnSendOtp" onclick="sendOtp()">
-            <span>Enviar código</span>
+            <span>Enviar enlace de acceso</span>
             <svg><use href="#i-arrow-right"/></svg>
           </button>
         </div>
@@ -1549,7 +1547,7 @@
         </div>
       </div>
 
-      <!-- PASO B: verificar código -->
+      <!-- PASO B: verificar código (SMS o Email OTP) -->
       <div id="authStepB" style="display:none">
         <div class="section-heading">
           <h2>Ingresa el código</h2>
@@ -1582,6 +1580,28 @@
 
         <div class="auth-back">
           <button onclick="backToAuthA()">← Cambiar número o email</button>
+        </div>
+      </div>
+
+      <!-- PASO C: confirmación de magic link enviado (email) -->
+      <div id="authStepC" style="display:none">
+        <div class="success-wrap" style="margin-block:auto">
+          <div class="success-icon" style="width:64px;height:64px">
+            <svg style="width:28px;height:28px"><use href="#i-mail"/></svg>
+          </div>
+          <h2 style="font-size:clamp(24px,6vw,30px)">Revisa tu correo</h2>
+          <p class="lead" id="authSentTo">Te enviamos un enlace de acceso a tu correo.</p>
+
+          <div class="email-help">
+            <strong>Consejo:</strong> ábrelo desde este mismo dispositivo. El enlace
+            te traerá de vuelta a BARBERLINK y te dejará dentro de tu cuenta automáticamente.
+          </div>
+
+          <div class="nav-buttons" style="margin-top:22px;width:100%;max-width:520px">
+            <button class="btn ghost" onclick="backToAuthA()">
+              <span>Usar otro método</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1669,7 +1689,14 @@
 const SUPABASE_URL  = 'https://byvmdpzfdpljtevmvuvd.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dm1kcHpmZHBsanRldm12dXZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDQ3NjUsImV4cCI6MjEwMjcyMDc2NX0.7qmABJouBxXfgIODohYIaNTKSF3lN7Wu19OuclTopm8';
 
-/* ⚠️ Cliente Supabase con Passkeys (WebAuthn) habilitado */
+/* ⚠️ URL de tu app en GitHub Pages.
+   Debe coincidir EXACTAMENTE con:
+   - Authentication → URL Configuration → Site URL
+   - Authentication → URL Configuration → Redirect URLs
+*/
+const APP_URL = 'https://sassdev960-coder.github.io/Barber/';
+
+/* Cliente Supabase con Passkeys (WebAuthn) habilitado */
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
     experimental: { passkey: true }
@@ -1735,14 +1762,14 @@ function showGlobalError(msg){
   el.textContent = msg;
   el.classList.add('visible');
   clearTimeout(showGlobalError._t);
-  showGlobalError._t = setTimeout(() => el.classList.remove('visible'), 5000);
+  showGlobalError._t = setTimeout(() => el.classList.remove('visible'), 6000);
 }
 function showGlobalSuccess(msg){
   const el = document.getElementById('globalSuccess');
   el.textContent = msg;
   el.classList.add('visible');
   clearTimeout(showGlobalSuccess._t);
-  showGlobalSuccess._t = setTimeout(() => el.classList.remove('visible'), 4500);
+  showGlobalSuccess._t = setTimeout(() => el.classList.remove('visible'), 5000);
 }
 
 /* =========================================================
@@ -1836,19 +1863,15 @@ function openAccount(){
 async function openAuth(){
   document.getElementById('authStepA').style.display = 'block';
   document.getElementById('authStepB').style.display = 'none';
+  document.getElementById('authStepC').style.display = 'none';
   document.getElementById('authPhone').value = '';
   document.getElementById('authEmail').value = '';
   document.getElementById('authError').classList.remove('visible');
   document.getElementById('authSuccess').classList.remove('visible');
   switchAuthTab('phone');
 
-  // Mostrar bloque de huella solo si el navegador lo soporta
   const block = document.getElementById('passkeyLoginBlock');
-  if (passkeySupported){
-    block.style.display = 'block';
-  } else {
-    block.style.display = 'none';
-  }
+  block.style.display = passkeySupported ? 'block' : 'none';
 
   showStep(6);
 }
@@ -1865,6 +1888,14 @@ function switchAuthTab(mode){
   document.getElementById('formEmail').style.display = mode === 'email' ? 'flex' : 'none';
   document.getElementById('authError').classList.remove('visible');
   document.getElementById('authSuccess').classList.remove('visible');
+
+  // Cambiar etiqueta del botón según método
+  const btnSpan = document.querySelector('#btnSendOtp span');
+  if (btnSpan){
+    btnSpan.textContent = mode === 'phone'
+      ? 'Enviar código'
+      : 'Enviar enlace de acceso';
+  }
 }
 
 function authError(msg){
@@ -1883,13 +1914,14 @@ function clearAuthMsgs(){
 }
 
 /* =========================================================
-   ENVIAR OTP
+   ENVIAR OTP / MAGIC LINK
    ========================================================= */
 async function sendOtp(){
   clearAuthMsgs();
   const btn = document.getElementById('btnSendOtp');
   const original = btn.querySelector('span').textContent;
 
+  /* ============ MODO TELÉFONO (OTP por SMS) ============ */
   if (authMode === 'phone'){
     const ph = document.getElementById('authPhone').value.trim();
     if (!/^[67]\d{7}$/.test(ph)){
@@ -1911,10 +1943,11 @@ async function sendOtp(){
       document.getElementById('authVerifySub').textContent = `Enviado a +591 ${ph}`;
       document.getElementById('authStepA').style.display = 'none';
       document.getElementById('authStepB').style.display = 'block';
+      document.getElementById('authStepC').style.display = 'none';
       setTimeout(() => document.querySelector('#otpInputs input[data-i="0"]').focus(), 300);
       startResendCooldown();
     } catch (e){
-      console.error(e);
+      console.error('[OTP phone]', e);
       const m = (e && e.message) || '';
       if (m.toLowerCase().includes('twilio') || m.toLowerCase().includes('provider')){
         authError('El envío por SMS no está configurado. Usa la opción Email.');
@@ -1925,41 +1958,53 @@ async function sendOtp(){
       btn.disabled = false;
       btn.querySelector('span').textContent = original;
     }
-  } else {
-    const email = document.getElementById('authEmail').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-      authError('Ingresa un correo válido');
-      shake(document.getElementById('authEmail').closest('.field'));
-      return;
-    }
-    authTarget = { email };
+    return;
+  }
 
-    btn.disabled = true;
-    btn.querySelector('span').textContent = 'Enviando…';
-    try {
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: window.location.href.split('#')[0]
-        }
-      });
-      if (error) throw error;
+  /* ============ MODO EMAIL (magic link) ============ */
+  const email = document.getElementById('authEmail').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    authError('Ingresa un correo válido');
+    shake(document.getElementById('authEmail').closest('.field'));
+    return;
+  }
+  authTarget = { email };
 
-      authSuccess('Te enviamos un enlace a tu correo. Ábrelo para entrar.');
-    } catch (e){
-      console.error(e);
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Enviando…';
+  try {
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: APP_URL
+      }
+    });
+    if (error) throw error;
+
+    document.getElementById('authSentTo').innerHTML =
+      `Te enviamos un enlace de acceso a<br/><strong>${escapeHtml(email)}</strong>`;
+    document.getElementById('authStepA').style.display = 'none';
+    document.getElementById('authStepB').style.display = 'none';
+    document.getElementById('authStepC').style.display = 'block';
+  } catch (e){
+    console.error('[OTP email]', e);
+    const m = (e && e.message) || '';
+    if (m.toLowerCase().includes('rate')){
+      authError('Demasiados intentos. Espera unos minutos y vuelve a probar.');
+    } else {
       authError('No pudimos enviar el enlace. Revisa tu correo e intenta de nuevo.');
-    } finally {
-      btn.disabled = false;
-      btn.querySelector('span').textContent = original;
     }
+  } finally {
+    btn.disabled = false;
+    btn.querySelector('span').textContent = original;
   }
 }
 
 function startResendCooldown(){
   otpCooldown = 60;
   const btn = document.getElementById('btnResend');
+  if (!btn) return;
   btn.disabled = true;
   clearInterval(resendTimer);
   const tick = () => {
@@ -1976,26 +2021,37 @@ function startResendCooldown(){
 }
 
 async function resendOtp(){
-  if (!authTarget || !authTarget.phone) return;
+  if (!authTarget) return;
   clearAuthMsgs();
   try {
-    const { error } = await sb.auth.signInWithOtp({
-      phone: authTarget.phone,
-      options: { shouldCreateUser: true }
-    });
+    let error;
+    if (authTarget.phone){
+      ({ error } = await sb.auth.signInWithOtp({
+        phone: authTarget.phone,
+        options: { shouldCreateUser: true }
+      }));
+    } else if (authTarget.email){
+      ({ error } = await sb.auth.signInWithOtp({
+        email: authTarget.email,
+        options: { shouldCreateUser: true, emailRedirectTo: APP_URL }
+      }));
+    }
     if (error) throw error;
+
     document.getElementById('otpSuccess').textContent = 'Código reenviado';
     document.getElementById('otpSuccess').classList.add('visible');
     startResendCooldown();
   } catch (e){
+    console.error('[resend]', e);
     document.getElementById('otpError').textContent = 'No pudimos reenviar el código.';
     document.getElementById('otpError').classList.add('visible');
   }
 }
 
 function backToAuthA(){
-  document.getElementById('authStepB').style.display = 'none';
   document.getElementById('authStepA').style.display = 'block';
+  document.getElementById('authStepB').style.display = 'none';
+  document.getElementById('authStepC').style.display = 'none';
   document.querySelectorAll('#otpInputs input').forEach(i => {
     i.value = '';
     i.classList.remove('filled');
@@ -2006,7 +2062,7 @@ function backToAuthA(){
 }
 
 /* =========================================================
-   VERIFICAR OTP
+   VERIFICAR OTP (SMS o Email)
    ========================================================= */
 async function verifyOtp(){
   const inputs = document.querySelectorAll('#otpInputs input');
@@ -2022,15 +2078,26 @@ async function verifyOtp(){
   btn.querySelector('span').textContent = 'Verificando…';
 
   try {
-    const { error } = await sb.auth.verifyOtp({
-      phone: authTarget.phone,
-      token: code,
-      type: 'sms'
-    });
+    let error;
+
+    if (authTarget.phone){
+      ({ error } = await sb.auth.verifyOtp({
+        phone: authTarget.phone,
+        token: code,
+        type: 'sms'
+      }));
+    } else if (authTarget.email){
+      ({ error } = await sb.auth.verifyOtp({
+        email: authTarget.email,
+        token: code,
+        type: 'email'
+      }));
+    }
+
     if (error) throw error;
     await onLoginSuccess();
   } catch (e){
-    console.error(e);
+    console.error('[verifyOtp]', e);
     document.getElementById('otpError').textContent = 'Código inválido o expirado.';
     document.getElementById('otpError').classList.add('visible');
     inputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
@@ -2052,16 +2119,14 @@ async function loginWithPasskey(){
   btn.querySelector('span').textContent = 'Verificando…';
 
   try {
-    const { data, error } = await sb.auth.signInWithPasskey();
+    const { error } = await sb.auth.signInWithPasskey();
     if (error) throw error;
-
-    // Si el email del usuario está verificado, se loguea directo
     await onLoginSuccess();
   } catch (e){
-    console.error(e);
+    console.error('[passkey login]', e);
     const m = (e && e.message) || '';
     if (m.toLowerCase().includes('not allowed') || m.toLowerCase().includes('cancel')){
-      // El usuario cerró el diálogo, no es error real
+      // usuario cerró el diálogo, silencioso
     } else if (m.toLowerCase().includes('no credentials') || m.toLowerCase().includes('not found')){
       authError('No encontramos una huella registrada en este dispositivo. Usa celular o email.');
     } else {
@@ -2079,13 +2144,16 @@ async function loginWithPasskey(){
 async function registerPasskey(){
   if (!currentUser) return;
   try {
-    const { data, error } = await sb.auth.registerPasskey();
+    const { error } = await sb.auth.registerPasskey();
     if (error) throw error;
 
     showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
+    // Recargar el perfil para reflejar el estado
+    const { data: { user } } = await sb.auth.getUser();
+    currentUser = user;
     renderProfile(dashboardData?.client || {});
   } catch (e){
-    console.error(e);
+    console.error('[passkey register]', e);
     const m = (e && e.message) || '';
     if (m.toLowerCase().includes('cancel')){
       // usuario canceló, silencioso
@@ -2145,9 +2213,8 @@ async function loadDashboard(){
   } catch (e){
     console.error('[dashboard]', e);
     showGlobalError('No pudimos cargar tu cuenta. Intenta de nuevo.');
-    const container2 = document.getElementById('upcomingList');
-    if (container2) {
-      container2.innerHTML = `
+    if (container){
+      container.innerHTML = `
         <div class="empty-state">
           <p>No pudimos cargar tus datos.</p>
           <button class="btn ghost" style="max-width:220px;margin:0 auto" onclick="loadDashboard()">
@@ -2337,9 +2404,7 @@ function renderProfile(c){
   const birth = c.birth_date ? formatLongDate(c.birth_date) : 'No definido';
   const tierLabel = ({bronze:'Bronce',silver:'Plata',gold:'Oro'})[c.loyalty_tier] || 'Bronce';
 
-  // Detectar si el usuario ya tiene passkeys registradas
-  const hasPasskey = !!currentUser?.identities?.some(i => i.provider === 'passkey')
-                    || !!currentUser?.factors?.some(f => f.factor_type === 'webauthn');
+  const hasPasskey = !!currentUser?.identities?.some(i => i.provider === 'passkey');
 
   el.innerHTML = `
     <div class="profile-row">
@@ -2410,7 +2475,7 @@ function switchTab(name){
 async function cancelBooking(bookingId){
   if (!confirm('¿Cancelar esta cita? Debes hacerlo con al menos 2h de anticipación.')) return;
   try {
-    const { data, error } = await sb.rpc('cancel_my_booking', {
+    const { error } = await sb.rpc('cancel_my_booking', {
       p_booking_id: bookingId,
       p_reason: null
     });
@@ -2443,7 +2508,6 @@ async function redeemReward(rewardId){
 }
 
 async function rebookFrom(serviceId, serviceName){
-  // Asegura que el paso 2 tenga los servicios cargados antes de pre-seleccionar
   if (!servicesLoaded){
     try { await initServices(); } catch(_) {}
   }
@@ -2570,7 +2634,6 @@ function onStepEnter(n){
 }
 
 function startBooking(){
-  // Limpia selección anterior al entrar desde el dashboard o la portada
   if (selectedService || selectedDate || selectedTime){
     selectedService = null;
     selectedDate = null;
@@ -3088,6 +3151,42 @@ async function lookupPhone(phone){
 }
 
 /* =========================================================
+   DETECCIÓN DE MAGIC LINK EN LA URL
+   Cuando el usuario hace click en el enlace del correo,
+   Supabase lo redirige a APP_URL con #access_token=... en el hash.
+   Aquí lo detectamos y abrimos el dashboard.
+   ========================================================= */
+async function handleMagicLink(){
+  const hash = window.location.hash || '';
+  if (!hash || !hash.includes('access_token')) return false;
+
+  // Limpiar URL inmediatamente para que el token no quede visible
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+
+  try {
+    // Supabase detecta el hash automáticamente en onAuthStateChange,
+    // pero esperamos un momento para asegurarnos de que la sesión está lista
+    const { data: { session } } = await sb.auth.getSession();
+    if (session){
+      currentUser = session.user;
+      await onLoginSuccess();
+      return true;
+    }
+    // Si no hay sesión aún, esperar un ciclo
+    await new Promise(r => setTimeout(r, 800));
+    const { data: { session: session2 } } = await sb.auth.getSession();
+    if (session2){
+      currentUser = session2.user;
+      await onLoginSuccess();
+      return true;
+    }
+  } catch (e){
+    console.error('[magic link]', e);
+  }
+  return false;
+}
+
+/* =========================================================
    INIT
    ========================================================= */
 async function init(){
@@ -3114,18 +3213,8 @@ async function init(){
   renderServices();
   renderCalendar();
 
-  // Si venimos de un magic link (email), abrir dashboard automáticamente
-  const hash = window.location.hash || '';
-  if (hash.includes('access_token')){
-    setTimeout(async () => {
-      history.replaceState(null, '', window.location.pathname + window.location.search);
-      const { data: { session } } = await sb.auth.getSession();
-      if (session){
-        currentUser = session.user;
-        await onLoginSuccess();
-      }
-    }, 500);
-  }
+  // Detectar si venimos de un magic link del correo
+  await handleMagicLink();
 }
 
 /* Listeners */
