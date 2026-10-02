@@ -666,15 +666,17 @@
   }
   .btn-passkey .fingerprint{ color:var(--gold); }
 
+  /* ============ OTP INPUTS (8 casillas) ============ */
   .otp-inputs{
-    display:flex; gap:8px; justify-content:center;
+    display:flex; gap:6px; justify-content:center;
     margin:24px 0 14px;
+    flex-wrap:nowrap;
   }
   .otp-inputs input{
-    width:46px; height:56px;
+    width:38px; height:52px;
     background:var(--card); border:1px solid var(--border);
-    border-radius:11px; color:#fff;
-    font-size:22px; font-weight:500; text-align:center;
+    border-radius:10px; color:#fff;
+    font-size:20px; font-weight:500; text-align:center;
     font-family:inherit; outline:none;
     transition:all .2s ease;
   }
@@ -683,6 +685,15 @@
     box-shadow:0 0 0 3px rgba(217,178,115,.10);
   }
   .otp-inputs input.filled{ border-color:var(--gold-border); }
+
+  @media (max-width:600px){
+    .otp-inputs{ gap:5px; }
+    .otp-inputs input{ width:34px; height:48px; font-size:18px; }
+  }
+  @media (max-width:380px){
+    .otp-inputs{ gap:4px; }
+    .otp-inputs input{ width:30px; height:44px; font-size:16px; }
+  }
 
   .otp-resend{
     font-size:12px; color:var(--muted); text-align:center; margin-bottom:22px;
@@ -1037,7 +1048,6 @@
     .summary{ padding:6px 16px; }
     .cal-header h4{ font-size:16px; }
     .svc-top h3{ font-size:15.5px; }
-    .otp-inputs input{ width:42px; height:52px; font-size:20px; }
     .points-value{ font-size:30px; }
   }
   @media (max-height:700px){
@@ -1548,6 +1558,8 @@
           <input type="tel" maxlength="1" inputmode="numeric" data-i="3"/>
           <input type="tel" maxlength="1" inputmode="numeric" data-i="4"/>
           <input type="tel" maxlength="1" inputmode="numeric" data-i="5"/>
+          <input type="tel" maxlength="1" inputmode="numeric" data-i="6"/>
+          <input type="tel" maxlength="1" inputmode="numeric" data-i="7"/>
         </div>
 
         <p class="form-error" id="otpError" role="alert"></p>
@@ -1656,7 +1668,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
-    detectSessionInUrl: false,   // Ya no usamos magic link
+    detectSessionInUrl: false,
     persistSession: true,
     autoRefreshToken: true,
     experimental: { passkey: true }
@@ -1692,6 +1704,7 @@ let authMode = 'phone';
 let authTarget = null;
 let resendTimer = null;
 let otpCooldown = 0;
+let otpAutoSubmitTimer = null;
 
 let passkeySupported = false;
 
@@ -1903,7 +1916,7 @@ async function sendOtp(){
     return;
   }
 
-  /* ============ MODO EMAIL (OTP con 6 dígitos) ============ */
+  /* ============ MODO EMAIL (OTP con 6-8 dígitos) ============ */
   const email = document.getElementById('authEmail').value.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     authError('Ingresa un correo válido');
@@ -1918,8 +1931,6 @@ async function sendOtp(){
     const { error } = await sb.auth.signInWithOtp({
       email,
       options: { shouldCreateUser: true }
-      // ⚠️ NO emailRedirectTo: así Supabase envía OTP de 6 dígitos,
-      // no un magic link. Requiere template custom con {{ .Token }}
     });
     if (error) throw error;
 
@@ -1999,16 +2010,18 @@ function backToAuthA(){
   document.getElementById('otpError').classList.remove('visible');
   document.getElementById('otpSuccess').classList.remove('visible');
   clearInterval(resendTimer);
+  clearTimeout(otpAutoSubmitTimer);
 }
 
 /* =========================================================
-   VERIFICAR OTP (SMS o Email)
+   VERIFICAR OTP (flexible: 6, 7 u 8 dígitos)
    ========================================================= */
 async function verifyOtp(){
   const inputs = document.querySelectorAll('#otpInputs input');
-  const code = Array.from(inputs).map(i => i.value).join('');
-  if (code.length !== 6){
-    document.getElementById('otpError').textContent = 'Ingresa los 6 dígitos';
+  const code = Array.from(inputs).map(i => i.value).join('').trim();
+
+  if (code.length < 6){
+    document.getElementById('otpError').textContent = 'Ingresa el código completo';
     document.getElementById('otpError').classList.add('visible');
     return;
   }
@@ -3134,41 +3147,66 @@ document.getElementById('authEmail').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); sendOtp(); }
 });
 
+/* ============ OTP LISTENERS (8 casillas flexibles) ============ */
+function scheduleOtpAutoSubmit(){
+  clearTimeout(otpAutoSubmitTimer);
+  const inputs = document.querySelectorAll('#otpInputs input');
+  const filled = Array.from(inputs).filter(i => i.value).length;
+
+  // 8 dígitos → submit inmediato
+  if (filled === 8){
+    verifyOtp();
+    return;
+  }
+  // 6 o 7 → esperar 1.5s por si sigue escribiendo
+  if (filled >= 6){
+    otpAutoSubmitTimer = setTimeout(() => verifyOtp(), 1500);
+  }
+}
+
 document.querySelectorAll('#otpInputs input').forEach(inp => {
   inp.addEventListener('input', e => {
     const v = e.target.value.replace(/\D/g,'');
     e.target.value = v.slice(-1);
     e.target.classList.toggle('filled', !!e.target.value);
     const i = Number(e.target.dataset.i);
-    if (e.target.value && i < 5){
+
+    if (e.target.value && i < 7){
       document.querySelector(`#otpInputs input[data-i="${i+1}"]`).focus();
     }
-    const all = Array.from(document.querySelectorAll('#otpInputs input')).map(x => x.value).join('');
-    if (all.length === 6){
-      document.getElementById('btnVerifyOtp').disabled = false;
-      setTimeout(() => verifyOtp(), 200);
-    } else {
-      document.getElementById('btnVerifyOtp').disabled = true;
-    }
+
+    const filled = Array.from(document.querySelectorAll('#otpInputs input'))
+      .filter(x => x.value).length;
+    document.getElementById('btnVerifyOtp').disabled = filled < 6;
+    scheduleOtpAutoSubmit();
   });
+
   inp.addEventListener('keydown', e => {
     const i = Number(e.target.dataset.i);
     if (e.key === 'Backspace' && !e.target.value && i > 0){
       document.querySelector(`#otpInputs input[data-i="${i-1}"]`).focus();
     }
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      verifyOtp();
+    }
   });
+
   inp.addEventListener('paste', e => {
     e.preventDefault();
-    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+    const text = (e.clipboardData || window.clipboardData)
+      .getData('text').replace(/\D/g,'').slice(0,8);
     if (!text) return;
     const inputs = document.querySelectorAll('#otpInputs input');
     text.split('').forEach((ch, idx) => {
       if (inputs[idx]){ inputs[idx].value = ch; inputs[idx].classList.add('filled'); }
     });
-    if (text.length === 6){
-      document.getElementById('btnVerifyOtp').disabled = false;
-      setTimeout(() => verifyOtp(), 200);
-    }
+    const nextEmpty = Array.from(inputs).findIndex(x => !x.value);
+    if (nextEmpty >= 0) inputs[nextEmpty].focus();
+    else if (inputs[7]) inputs[7].focus();
+
+    document.getElementById('btnVerifyOtp').disabled = text.length < 6;
+    scheduleOtpAutoSubmit();
   });
 });
 
