@@ -8,7 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -215,7 +215,14 @@
     right: calc(16px + var(--safe-right));
     z-index:3;
   }
-  .cover-account button{
+  .cover-settings{
+    position:absolute;
+    top: calc(16px + var(--safe-top));
+    left: calc(16px + var(--safe-left));
+    z-index:3;
+  }
+  .cover-account button,
+  .cover-settings button{
     width:42px; height:42px; border-radius:50%;
     background:rgba(20,20,20,.65);
     border:1px solid rgba(217,178,115,.45);
@@ -224,11 +231,14 @@
     color:var(--gold);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; transition:all .25s ease;
+    position:relative;
   }
-  .cover-account button:hover{
+  .cover-account button:hover,
+  .cover-settings button:hover{
     background:rgba(217,178,115,.15); transform:scale(1.05);
   }
-  .cover-account button svg{ width:20px; height:20px; }
+  .cover-account button svg,
+  .cover-settings button svg{ width:20px; height:20px; }
   .cover-account .badge-dot{
     position:absolute; top:-2px; right:-2px;
     width:10px; height:10px; border-radius:50%;
@@ -236,6 +246,13 @@
     display:none;
   }
   .cover-account.logged .badge-dot{ display:block; }
+  .cover-settings button .settings-hint{
+    position:absolute; bottom:-24px; right:-4px;
+    font-size:8px; letter-spacing:.15em;
+    color:var(--gold); opacity:.65;
+    white-space:nowrap;
+    pointer-events:none;
+  }
   .cover-content{
     position:relative; z-index:2;
     width:100%; max-width:520px;
@@ -772,14 +789,8 @@
     border-radius:50%; border:1.5px solid var(--gold-border);
     animation:ripple 2.6s ease-out infinite;
   }
-  .fingerprint-hero::before{
-    inset:6px;
-    animation-delay:0s;
-  }
-  .fingerprint-hero::after{
-    inset:-6px;
-    animation-delay:1.3s;
-  }
+  .fingerprint-hero::before{ inset:6px; animation-delay:0s; }
+  .fingerprint-hero::after{ inset:-6px; animation-delay:1.3s; }
   .fingerprint-hero svg{
     width:52px; height:52px;
     position:relative; z-index:1;
@@ -1107,6 +1118,121 @@
     border-color:rgba(255,107,107,.5); color:#ff8f8f;
   }
 
+  /* ============ CONSOLA DE DEBUG ============ */
+  .console-body{
+    width:100%; max-width:560px;
+    display:flex; flex-direction:column; gap:14px;
+    padding-bottom: var(--safe-bottom);
+  }
+  .console-section{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .console-section h4{
+    font-size:10px; letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--gold); margin-bottom:10px;
+    font-weight:600;
+    display:flex; align-items:center; gap:6px;
+  }
+  .console-row{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:12px; padding:6px 0;
+    font-size:12px;
+    border-bottom:1px solid rgba(255,255,255,.03);
+  }
+  .console-row:last-child{ border-bottom:none; }
+  .console-key{
+    color:var(--muted); flex-shrink:0;
+  }
+  .console-val{
+    color:#fff; text-align:right;
+    font-family:'JetBrains Mono','SF Mono',Menlo,monospace;
+    font-size:11px;
+    word-break:break-all;
+    letter-spacing:.005em;
+  }
+  .console-val.ok{ color:#5ee27e; }
+  .console-val.fail{ color:#ff7f76; }
+  .console-val.warn{ color:#ffb14e; }
+  .console-val.dim{ color:var(--muted); }
+
+  .console-logs{
+    background:#050505;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+    max-height:340px;
+    overflow-y:auto;
+    font-family:'JetBrains Mono','SF Mono',Menlo,monospace;
+    font-size:11px;
+    line-height:1.65;
+  }
+  .console-logs::-webkit-scrollbar{ width:4px; }
+  .console-logs::-webkit-scrollbar-thumb{ background:#2a2a2a; border-radius:2px; }
+  .log-line{
+    padding:2px 0;
+    color:#b8b8b8;
+    word-break:break-word;
+    border-bottom:1px solid rgba(255,255,255,.02);
+  }
+  .log-line:last-child{ border-bottom:none; }
+  .log-line.info{ color:#b8b8b8; }
+  .log-line.ok{ color:#5ee27e; }
+  .log-line.warn{ color:#ffb14e; }
+  .log-line.error{ color:#ff7f76; }
+  .log-line.auth{ color:#8ab4f8; }
+  .log-line.passkey{ color:var(--gold-2); }
+  .log-line.device{ color:#c586c0; }
+  .log-time{ color:#555; margin-right:6px; }
+  .log-type{
+    display:inline-block;
+    min-width:56px;
+    color:var(--gold);
+    font-weight:500;
+  }
+  .log-data{ color:#666; }
+
+  .console-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .console-actions button{
+    padding:12px 10px;
+    background:var(--card-2);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+    color:var(--text-2);
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:.05em;
+    cursor:pointer;
+    transition:all .2s ease;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .console-actions button svg{ width:13px; height:13px; }
+  .console-actions button:hover{
+    border-color:var(--gold-border);
+    color:var(--gold);
+    background:rgba(217,178,115,.04);
+  }
+  .console-actions button.primary{
+    background:linear-gradient(180deg,var(--gold-2),var(--gold));
+    color:#0a0a0a;
+    border-color:var(--gold);
+    font-weight:600;
+  }
+  .console-actions button.primary:hover{
+    filter:brightness(1.05);
+    color:#0a0a0a;
+  }
+
   .progress{
     position:fixed;
     top: calc(18px + var(--safe-top));
@@ -1184,6 +1310,10 @@
     .fingerprint-hero svg{ width:44px; height:44px; }
     .cover-top{ top: calc(32px + var(--safe-top)); }
     .cover-logo{ width:100px; max-height:74px; }
+    .console-body{ gap:12px; }
+    .console-section{ padding:12px 14px; }
+    .console-val{ font-size:10.5px; }
+    .console-logs{ font-size:10.5px; max-height:280px; }
   }
   @media (max-height:700px){
     .cover-content{ padding-bottom: calc(32px + var(--safe-bottom)); }
@@ -1289,6 +1419,24 @@
   <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
   </symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 17l6-5-6-5M12 19h8"/>
+  </symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2"/>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+  </symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9c2.5 0 4.8 1 6.4 2.6"/>
+    <path d="M21 3v6h-6"/>
+  </symbol>
 </svg>
 
 <div class="global-error" id="globalError"></div>
@@ -1303,6 +1451,12 @@
   <!-- ======================== PORTADA ======================== -->
   <section class="screen cover active" data-step="0">
     <div class="cover-bg"></div>
+
+    <div class="cover-settings">
+      <button onclick="openDebugConsole()" aria-label="Consola de diagnóstico">
+        <svg><use href="#i-settings"/></svg>
+      </button>
+    </div>
 
     <div class="cover-account" id="coverAccount">
       <button onclick="openAccount()" aria-label="Mi cuenta">
@@ -1607,7 +1761,6 @@
       </div>
 
       <div class="success-actions">
-        <!-- Botón solo visible si hay sesión activa -->
         <button class="btn" id="btnBackToAccount" onclick="backToAccountFromSuccess()" style="display:none">
           <svg><use href="#i-user-circle"/></svg>
           <span>Ir a mi cuenta</span>
@@ -1860,6 +2013,24 @@
     </div>
   </section>
 
+  <!-- ======================== CONSOLA DE DIAGNÓSTICO ======================== -->
+  <section class="screen" data-step="9">
+    <header class="screen-head">
+      <button class="icon-btn" onclick="closeDebugConsole()" aria-label="Cerrar">
+        <svg><use href="#i-arrow-left"/></svg>
+      </button>
+      <h1 class="screen-title">Consola</h1>
+      <div class="mini-brand" aria-hidden="true">
+        <svg><use href="#i-terminal"/></svg>
+        <span>DEBUG</span>
+      </div>
+    </header>
+
+    <div class="console-body" id="consoleBody">
+      <!-- Se rellena desde JS -->
+    </div>
+  </section>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1886,6 +2057,357 @@ const MONTHS_SHORT = ["Ene","Feb","Mar","Abr","May","Jun",
                       "Jul","Ago","Sep","Oct","Nov","Dic"];
 
 const PASSKEY_DISMISS_KEY = 'barberlink_passkey_dismissed_v1';
+const DEBUG_LOG_KEY = 'barberlink_debug_log_v1';
+const MAX_LOGS = 120;
+
+/* =========================================================
+   SISTEMA DE LOG
+   ========================================================= */
+let debugLogs = [];
+
+function loadDebugLogs(){
+  try {
+    const raw = localStorage.getItem(DEBUG_LOG_KEY);
+    debugLogs = raw ? JSON.parse(raw) : [];
+  } catch { debugLogs = []; }
+}
+
+function saveDebugLogs(){
+  try {
+    localStorage.setItem(DEBUG_LOG_KEY, JSON.stringify(debugLogs.slice(-MAX_LOGS)));
+  } catch {}
+}
+
+function safeStringify(obj){
+  try {
+    if (obj instanceof Error) return obj.message;
+    if (typeof obj === 'object') return JSON.stringify(obj);
+    return String(obj);
+  } catch { return String(obj); }
+}
+
+function debugLog(type, msg, data){
+  const entry = {
+    t: Date.now(),
+    type,
+    msg: String(msg || ''),
+    data: data ? safeStringify(data) : null
+  };
+  debugLogs.push(entry);
+  if (debugLogs.length > MAX_LOGS) debugLogs = debugLogs.slice(-MAX_LOGS);
+  saveDebugLogs();
+
+  const prefix = `[${type}]`;
+  if (type === 'error') console.error(prefix, msg, data || '');
+  else if (type === 'warn') console.warn(prefix, msg, data || '');
+  else console.log(prefix, msg, data || '');
+
+  if (currentStep === 9) renderDebugConsole();
+}
+
+function clearDebugLogs(){
+  debugLogs = [];
+  saveDebugLogs();
+  if (currentStep === 9) renderDebugConsole();
+  showGlobalSuccess('Logs limpiados');
+}
+
+function copyDebugLogs(){
+  if (!debugLogs.length){
+    showGlobalError('No hay logs para copiar');
+    return;
+  }
+  const text = debugLogs.map(l => {
+    const d = new Date(l.t);
+    const time = d.toLocaleTimeString('es-BO', { hour12: false });
+    return `[${time}] [${l.type}] ${l.msg}${l.data ? ' :: ' + l.data : ''}`;
+  }).join('\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(() => showGlobalSuccess('Logs copiados al portapapeles'))
+      .catch(() => fallbackCopyLogs(text));
+  } else {
+    fallbackCopyLogs(text);
+  }
+}
+
+function fallbackCopyLogs(text){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showGlobalSuccess('Logs copiados al portapapeles');
+  } catch {
+    showGlobalError('No pudimos copiar los logs');
+  }
+}
+
+/* Detectar plataforma y navegador */
+function detectPlatform(){
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+  if (/Android/.test(ua)) return 'Android';
+  if (/Windows/.test(ua)) return 'Windows';
+  if (/Macintosh|Mac OS X/.test(ua)) return 'macOS';
+  if (/Linux/.test(ua)) return 'Linux';
+  return 'Desconocida';
+}
+function detectBrowser(){
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/OPR\/|Opera/.test(ua)) return 'Opera';
+  if (/Chrome\//.test(ua)) return 'Chrome';
+  if (/Safari\//.test(ua)) return 'Safari';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  return 'Desconocido';
+}
+
+/* =========================================================
+   CONSOLA UI
+   ========================================================= */
+function openDebugConsole(){
+  renderDebugConsole();
+  showStep(9);
+}
+function closeDebugConsole(){
+  showStep(0);
+}
+
+function renderDebugConsole(){
+  const el = document.getElementById('consoleBody');
+  if (!el) return;
+
+  const platform = detectPlatform();
+  const browser = detectBrowser();
+  const isSecure = window.isSecureContext;
+  const domain = window.location.hostname;
+  const origin = window.location.origin;
+  const protocol = window.location.protocol;
+
+  const hasWebAuthn = !!window.PublicKeyCredential;
+  const canCheckPlatform = !!(window.PublicKeyCredential &&
+    typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function');
+
+  const session = currentUser ? 'activa' : 'sin sesión';
+  const uid = currentUser?.id ? currentUser.id.slice(0, 8) + '…' : '—';
+  const email = currentUser?.email || '—';
+  const phone = currentUser?.phone || '—';
+
+  const identities = currentUser?.identities || [];
+  const identitiesStr = identities.length
+    ? identities.map(i => i.provider).join(', ')
+    : '—';
+
+  el.innerHTML = `
+    <div class="console-section">
+      <h4><svg style="width:12px;height:12px"><use href="#i-terminal"/></svg> Estado del sistema</h4>
+      <div class="console-row">
+        <span class="console-key">Conexión segura</span>
+        <span class="console-val ${isSecure ? 'ok' : 'fail'}">${isSecure ? 'HTTPS ✓' : protocol + ' ✗'}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Dominio</span>
+        <span class="console-val">${escapeHtml(domain)}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Origin</span>
+        <span class="console-val dim">${escapeHtml(origin)}</span>
+      </div>
+    </div>
+
+    <div class="console-section">
+      <h4>◆ Dispositivo</h4>
+      <div class="console-row">
+        <span class="console-key">Plataforma</span>
+        <span class="console-val">${platform}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Navegador</span>
+        <span class="console-val">${browser}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Idioma</span>
+        <span class="console-val">${escapeHtml(navigator.language || '—')}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Pantalla</span>
+        <span class="console-val">${window.innerWidth}×${window.innerHeight}</span>
+      </div>
+    </div>
+
+    <div class="console-section">
+      <h4><svg style="width:12px;height:12px"><use href="#i-fingerprint"/></svg> Huella / Passkey</h4>
+      <div class="console-row">
+        <span class="console-key">WebAuthn API</span>
+        <span class="console-val ${hasWebAuthn ? 'ok' : 'fail'}">${hasWebAuthn ? 'Disponible ✓' : 'No disponible ✗'}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Verificación plataforma</span>
+        <span class="console-val ${canCheckPlatform ? 'ok' : 'warn'}">${canCheckPlatform ? 'Soportada ✓' : 'No soportada'}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Huella lista</span>
+        <span class="console-val ${passkeySupported ? 'ok' : 'fail'}">${passkeySupported ? 'Sí ✓' : 'No ✗'}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Huellas registradas</span>
+        <span class="console-val ${currentPasskeyCount > 0 ? 'ok' : ''}">${currentPasskeyCount}</span>
+      </div>
+    </div>
+
+    <div class="console-section">
+      <h4><svg style="width:12px;height:12px"><use href="#i-user"/></svg> Sesión</h4>
+      <div class="console-row">
+        <span class="console-key">Estado</span>
+        <span class="console-val ${currentUser ? 'ok' : 'warn'}">${session}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">User ID</span>
+        <span class="console-val">${escapeHtml(uid)}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Email</span>
+        <span class="console-val">${escapeHtml(email)}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Teléfono</span>
+        <span class="console-val">${escapeHtml(phone)}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Proveedores vinculados</span>
+        <span class="console-val dim">${escapeHtml(identitiesStr)}</span>
+      </div>
+    </div>
+
+    <div class="console-section">
+      <h4>◆ Log de eventos (${debugLogs.length})</h4>
+      <div class="console-logs">
+        ${debugLogs.length === 0
+          ? '<div class="log-line" style="color:#555">Sin eventos registrados</div>'
+          : debugLogs.slice().reverse().map(l => {
+              const d = new Date(l.t);
+              const time = d.toLocaleTimeString('es-BO', { hour12: false });
+              return `<div class="log-line ${l.type}">
+                <span class="log-time">${time}</span><span class="log-type">${l.type.toUpperCase()}</span>${escapeHtml(l.msg)}${l.data ? ' <span class="log-data">'+escapeHtml(l.data)+'</span>' : ''}
+              </div>`;
+            }).join('')
+        }
+      </div>
+    </div>
+
+    <div class="console-section">
+      <h4>◆ Acciones</h4>
+      <div class="console-actions">
+        <button class="primary" onclick="runPasskeyTest()">
+          <svg><use href="#i-fingerprint"/></svg> Probar huella
+        </button>
+        <button onclick="refreshSession()">
+          <svg><use href="#i-refresh"/></svg> Refrescar
+        </button>
+        <button onclick="copyDebugLogs()">
+          <svg><use href="#i-copy"/></svg> Copiar logs
+        </button>
+        <button onclick="clearDebugLogs()">
+          <svg><use href="#i-trash"/></svg> Limpiar logs
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   ACCIONES DE LA CONSOLA
+   ========================================================= */
+async function runPasskeyTest(){
+  debugLog('passkey', 'Iniciando test de huella');
+
+  if (!window.PublicKeyCredential){
+    debugLog('error', 'WebAuthn no disponible en este navegador');
+    showGlobalError('WebAuthn no disponible');
+    return;
+  }
+  if (!window.isSecureContext){
+    debugLog('error', 'Contexto no seguro — HTTPS requerido');
+    showGlobalError('HTTPS requerido');
+    return;
+  }
+
+  try {
+    const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    debugLog(ok ? 'ok' : 'warn',
+      `Autenticador de plataforma: ${ok ? 'disponible' : 'no disponible'}`);
+    if (!ok){
+      showGlobalError('Este dispositivo no tiene huella configurada');
+      return;
+    }
+  } catch (e){
+    debugLog('error', 'Error verificando autenticador', e.message);
+    showGlobalError('Error verificando huella');
+    return;
+  }
+
+  if (!currentUser){
+    debugLog('warn', 'No hay sesión activa — no se puede registrar huella');
+    showGlobalError('Inicia sesión primero');
+    return;
+  }
+
+  try {
+    debugLog('info', 'Llamando a sb.auth.registerPasskey()…');
+    const { data, error } = await sb.auth.registerPasskey();
+
+    if (error){
+      debugLog('error', 'Supabase devolvió error', {
+        code: error.code || '—',
+        message: error.message
+      });
+      throw error;
+    }
+
+    debugLog('ok', 'Passkey registrada correctamente', data?.id ? { id: String(data.id).slice(0,8)+'…' } : null);
+
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) currentUser = user;
+    currentPasskeyCount = countUserPasskeys();
+
+    showGlobalSuccess('¡Huella registrada en este dispositivo!');
+    renderDebugConsole();
+  } catch (e){
+    const code = e?.code || '';
+    const msg = e?.message || String(e);
+    debugLog('error', 'Test de huella falló', { code, msg });
+
+    if (msg.toLowerCase().includes('cancel')) return;
+    showGlobalError('Falló: ' + msg.slice(0, 80));
+  }
+}
+
+async function refreshSession(){
+  debugLog('auth', 'Refrescando sesión…');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session){
+      const { data: { user } } = await sb.auth.getUser();
+      currentUser = user || session.user;
+    } else {
+      currentUser = null;
+    }
+    currentPasskeyCount = countUserPasskeys();
+    updateAuthUI();
+    debugLog('ok', `Sesión: ${currentUser ? 'activa' : 'sin sesión'}`);
+    renderDebugConsole();
+    showGlobalSuccess('Sesión refrescada');
+  } catch (e){
+    debugLog('error', 'Error refrescando sesión', e?.message || '');
+    showGlobalError('No pudimos refrescar');
+  }
+}
 
 /* =========================================================
    ESTADO
@@ -1943,6 +2465,7 @@ function showGlobalError(msg){
   el.classList.add('visible');
   clearTimeout(showGlobalError._t);
   showGlobalError._t = setTimeout(() => el.classList.remove('visible'), 7000);
+  debugLog('error', 'UI error mostrado', msg);
 }
 function showGlobalSuccess(msg){
   const el = document.getElementById('globalSuccess');
@@ -2022,7 +2545,6 @@ async function checkSession(){
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user || null;
   if (currentUser){
-    // Refrescar para tener las identities más recientes
     try {
       const { data: { user } } = await sb.auth.getUser();
       if (user) currentUser = user;
@@ -2045,7 +2567,9 @@ function updateAuthUI(){
 }
 
 sb.auth.onAuthStateChange((event, session) => {
+  debugLog('auth', `Auth event: ${event}`, session?.user?.id ? { uid: session.user.id.slice(0,8)+'…' } : null);
   currentUser = session?.user || null;
+  currentPasskeyCount = countUserPasskeys();
   updateAuthUI();
 });
 
@@ -2115,6 +2639,7 @@ async function sendOtp(){
       return;
     }
     authTarget = { phone: '+591' + ph };
+    debugLog('auth', 'Enviando OTP SMS a ' + authTarget.phone);
 
     btn.disabled = true;
     btn.querySelector('span').textContent = 'Enviando…';
@@ -2125,13 +2650,14 @@ async function sendOtp(){
       });
       if (error) throw error;
 
+      debugLog('ok', 'OTP SMS enviado');
       document.getElementById('authVerifySub').textContent = `Enviado a +591 ${ph}`;
       document.getElementById('authStepA').style.display = 'none';
       document.getElementById('authStepB').style.display = 'block';
       setTimeout(() => document.querySelector('#otpInputs input[data-i="0"]').focus(), 300);
       startResendCooldown();
     } catch (e){
-      console.error('[OTP phone]', e);
+      debugLog('error', 'Error OTP SMS', e.message);
       const m = (e && e.message) || '';
       if (m.toLowerCase().includes('twilio') || m.toLowerCase().includes('provider')){
         authError('El envío por SMS no está configurado. Usa la opción Email.');
@@ -2152,6 +2678,7 @@ async function sendOtp(){
     return;
   }
   authTarget = { email };
+  debugLog('auth', 'Enviando OTP email a ' + email);
 
   btn.disabled = true;
   btn.querySelector('span').textContent = 'Enviando…';
@@ -2162,13 +2689,14 @@ async function sendOtp(){
     });
     if (error) throw error;
 
+    debugLog('ok', 'OTP email enviado');
     document.getElementById('authVerifySub').textContent = `Código enviado a ${email}`;
     document.getElementById('authStepA').style.display = 'none';
     document.getElementById('authStepB').style.display = 'block';
     setTimeout(() => document.querySelector('#otpInputs input[data-i="0"]').focus(), 300);
     startResendCooldown();
   } catch (e){
-    console.error('[OTP email]', e);
+    debugLog('error', 'Error OTP email', e.message);
     const m = (e && e.message) || '';
     if (m.toLowerCase().includes('rate')){
       authError('Demasiados intentos. Espera unos minutos y vuelve a probar.');
@@ -2203,6 +2731,7 @@ function startResendCooldown(){
 async function resendOtp(){
   if (!authTarget) return;
   clearAuthMsgs();
+  debugLog('auth', 'Reenviando OTP');
   try {
     let error;
     if (authTarget.phone){
@@ -2222,7 +2751,7 @@ async function resendOtp(){
     document.getElementById('otpSuccess').classList.add('visible');
     startResendCooldown();
   } catch (e){
-    console.error('[resend]', e);
+    debugLog('error', 'Error reenviando', e.message);
     document.getElementById('otpError').textContent = 'No pudimos reenviar el código.';
     document.getElementById('otpError').classList.add('visible');
   }
@@ -2257,6 +2786,7 @@ async function verifyOtp(){
   const btn = document.getElementById('btnVerifyOtp');
   btn.disabled = true;
   btn.querySelector('span').textContent = 'Verificando…';
+  debugLog('auth', `Verificando OTP (${code.length} dígitos)`);
 
   try {
     let error;
@@ -2270,9 +2800,10 @@ async function verifyOtp(){
       }));
     }
     if (error) throw error;
+    debugLog('ok', 'OTP verificado correctamente');
     await onLoginSuccess();
   } catch (e){
-    console.error('[verifyOtp]', e);
+    debugLog('error', 'Error verificando OTP', e.message);
     document.getElementById('otpError').textContent = 'Código inválido o expirado.';
     document.getElementById('otpError').classList.add('visible');
     inputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
@@ -2288,6 +2819,7 @@ async function verifyOtp(){
    ========================================================= */
 async function loginWithPasskey(){
   clearAuthMsgs();
+  debugLog('passkey', 'Iniciando login con huella');
   const btn = document.getElementById('btnPasskeyLogin');
   const original = btn.querySelector('span').textContent;
   btn.disabled = true;
@@ -2296,12 +2828,13 @@ async function loginWithPasskey(){
   try {
     const { error } = await sb.auth.signInWithPasskey();
     if (error) throw error;
+    debugLog('ok', 'Login con huella exitoso');
     await onLoginSuccess();
   } catch (e){
-    console.error('[passkey login]', e);
     const m = (e && e.message) || '';
+    debugLog('error', 'Login con huella falló', m);
     if (m.toLowerCase().includes('not allowed') || m.toLowerCase().includes('cancel')){
-      // usuario cerró, silencioso
+      // silencioso
     } else if (m.toLowerCase().includes('no credentials') || m.toLowerCase().includes('not found')){
       authError('No encontramos una huella registrada en este dispositivo. Usa celular o email.');
     } else {
@@ -2314,34 +2847,33 @@ async function loginWithPasskey(){
 }
 
 /* =========================================================
-   PASSKEY: registrar huella — versión mejorada
+   PASSKEY: registrar huella
    ========================================================= */
 async function registerPasskey(){
   if (!currentUser){
     showGlobalError('Primero debes iniciar sesión');
     return;
   }
-
   if (!passkeySupported){
     showGlobalError('Tu dispositivo no soporta huella digital');
     return;
   }
 
-  try {
-    console.log('[passkey] Iniciando registro...');
-    console.log('[passkey] User ID:', currentUser.id);
-    console.log('[passkey] Domain:', window.location.hostname);
+  debugLog('passkey', 'registerPasskey() llamado');
 
+  try {
     const { data, error } = await sb.auth.registerPasskey();
 
     if (error){
-      console.error('[passkey] Supabase error:', error);
+      debugLog('error', 'Supabase registerPasskey error', {
+        code: error.code || '—',
+        msg: error.message
+      });
       throw error;
     }
 
-    console.log('[passkey] Registro exitoso:', data);
+    debugLog('ok', 'Passkey registrada', data?.id ? { id: String(data.id).slice(0,8)+'…' } : null);
 
-    // Refrescar usuario para actualizar identities
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
     currentPasskeyCount = countUserPasskeys();
@@ -2349,47 +2881,32 @@ async function registerPasskey(){
     showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
     renderProfile(dashboardData?.client || {});
   } catch (e){
-    console.error('[passkey register] Error completo:', e);
-
-    // Extraer mensaje lo más descriptivo posible
     const code = e?.code || e?.error?.code || '';
     const msg  = (e?.message || e?.error?.message || e?.toString() || '').toLowerCase();
 
-    console.log('[passkey] Código:', code, 'Mensaje:', msg);
+    debugLog('error', 'registerPasskey falló', { code, msg });
 
-    if (msg.includes('cancel') || msg.includes('aborted') || msg.includes('not allowed')){
-      // Usuario canceló el diálogo - silencioso
-      return;
-    }
-
+    if (msg.includes('cancel') || msg.includes('aborted') || msg.includes('not allowed')) return;
     if (msg.includes('already') || msg.includes('exists') || msg.includes('duplicate')){
-      showGlobalError('Ya tienes una huella registrada en este dispositivo. Intenta con otro dispositivo o contacta a soporte.');
+      showGlobalError('Ya tienes una huella registrada en este dispositivo.');
       return;
     }
-
-    if (msg.includes('timeout') || msg.includes('timed out')){
-      showGlobalError('Se agotó el tiempo. Acerca tu dedo al sensor más rápido.');
-      return;
-    }
-
+    if (msg.includes('timeout')){ showGlobalError('Se agotó el tiempo. Acerca tu dedo más rápido.'); return; }
     if (msg.includes('not supported') || msg.includes('not available')){
-      showGlobalError('Tu dispositivo no tiene configurada una huella. Configúrala en Ajustes primero.');
+      showGlobalError('Tu dispositivo no tiene huella configurada. Configúrala en Ajustes primero.');
       return;
     }
-
     if (msg.includes('domain') || msg.includes('rp id') || msg.includes('origin')){
-      showGlobalError('Error de configuración del dominio. Contacta a soporte.');
+      showGlobalError('Error de configuración del dominio.');
       return;
     }
-
-    // Error genérico con pista del mensaje real
     const hint = e?.message ? ` (${e.message.slice(0, 60)})` : '';
-    showGlobalError('No pudimos activar la huella' + hint + '. Intenta de nuevo.');
+    showGlobalError('No pudimos activar la huella' + hint);
   }
 }
 
 /* =========================================================
-   PASSKEY: onboarding post-login
+   PASSKEY: onboarding
    ========================================================= */
 function shouldOfferPasskeyOnboarding(){
   if (!passkeySupported) return false;
@@ -2404,6 +2921,7 @@ async function activatePasskeyOnboarding(){
   const original = btn.querySelector('span').textContent;
   btn.disabled = true;
   btn.querySelector('span').textContent = 'Activando…';
+  debugLog('passkey', 'Onboarding: activando huella');
 
   try {
     const { error } = await sb.auth.registerPasskey();
@@ -2413,26 +2931,24 @@ async function activatePasskeyOnboarding(){
     if (user) currentUser = user;
     currentPasskeyCount = countUserPasskeys();
 
+    debugLog('ok', 'Huella activada desde onboarding');
     showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
     markPasskeyOnboardingDismissed();
 
     await loadDashboard();
     showStep(7);
   } catch (e){
-    console.error('[passkey onboarding]', e);
     const m = (e?.message || '').toLowerCase();
+    debugLog('error', 'Onboarding passkey falló', e?.message || '');
 
-    if (m.includes('cancel') || m.includes('aborted')){
-      // usuario canceló, no hacer nada
-    } else if (m.includes('already') || m.includes('exists')){
-      showGlobalError('Ya tienes una huella registrada en este dispositivo.');
+    if (m.includes('cancel') || m.includes('aborted')) return;
+    if (m.includes('already') || m.includes('exists')){
       markPasskeyOnboardingDismissed();
       await loadDashboard();
       showStep(7);
-    } else {
-      const hint = e?.message ? ` (${e.message.slice(0, 60)})` : '';
-      showGlobalError('No pudimos activar la huella' + hint);
+      return;
     }
+    showGlobalError('No pudimos activar la huella' + (e?.message ? ` (${e.message.slice(0,60)})` : ''));
   } finally {
     btn.disabled = false;
     btn.querySelector('span').textContent = original;
@@ -2440,6 +2956,7 @@ async function activatePasskeyOnboarding(){
 }
 
 async function skipPasskeyOnboarding(){
+  debugLog('passkey', 'Onboarding: usuario eligió "Ahora no"');
   markPasskeyOnboardingDismissed();
   await loadDashboard();
   showStep(7);
@@ -2456,7 +2973,6 @@ async function onLoginSuccess(){
     }
   } catch(_) {}
 
-  // Refrescar usuario para tener identities actualizadas
   try {
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
@@ -2475,6 +2991,7 @@ async function onLoginSuccess(){
    LOGOUT
    ========================================================= */
 async function logout(){
+  debugLog('auth', 'Cerrando sesión');
   await sb.auth.signOut();
   currentUser = null;
   dashboardData = null;
@@ -2496,9 +3013,6 @@ function goToProfile(){
   }
 }
 
-/* =========================================================
-   VUELTA A CUENTA desde éxito de reserva
-   ========================================================= */
 async function backToAccountFromSuccess(){
   await loadDashboard();
   showStep(7);
@@ -2522,7 +3036,7 @@ async function loadDashboard(){
     dashboardData = data;
     renderDashboard();
   } catch (e){
-    console.error('[dashboard]', e);
+    debugLog('error', 'Error cargando dashboard', e.message);
     showGlobalError('No pudimos cargar tu cuenta. Intenta de nuevo.');
     if (container){
       container.innerHTML = `
@@ -2792,7 +3306,7 @@ async function cancelBooking(bookingId){
     showGlobalSuccess('Reserva cancelada');
     await loadDashboard();
   } catch (e){
-    console.error(e);
+    debugLog('error', 'Error cancelando reserva', e.message);
     const m = (e && e.message) || '';
     if (m.includes('TOO_LATE')) showGlobalError('Ya no se puede cancelar: falta menos de 2 horas.');
     else if (m.includes('ALREADY_FINALIZED')) showGlobalError('Esta reserva ya estaba finalizada.');
@@ -2808,7 +3322,7 @@ async function redeemReward(rewardId){
     showGlobalSuccess(`Canje exitoso · Código: ${data.code}`);
     await loadDashboard();
   } catch (e){
-    console.error(e);
+    debugLog('error', 'Error canjeando recompensa', e.message);
     const m = (e && e.message) || '';
     if (m.includes('NOT_ENOUGH_POINTS')) showGlobalError('No tienes suficientes puntos.');
     else if (m.includes('TIER_TOO_LOW')) showGlobalError('Necesitas un nivel superior para este premio.');
@@ -3305,15 +3819,20 @@ async function submitBooking(){
 
   if (currentUser) payload.client_id = currentUser.id;
 
+  debugLog('info', 'Enviando reserva', {
+    fecha: selectedDate, hora: selectedTime, servicio: selectedService.name
+  });
+
   try {
     const { error } = await sb.from('bookings').insert(payload);
     if (error) throw error;
 
+    debugLog('ok', 'Reserva creada correctamente');
     lastBooking = payload;
     fillSuccess(payload);
     showStep(5);
   } catch (e){
-    console.error(e);
+    debugLog('error', 'Error creando reserva', e.message);
     const code = e && e.code;
     const msg  = (e && e.message) || '';
     if (code === '23505' || code === '23P01' || msg.includes('SLOT_TAKEN') || msg.includes('duplicate key')){
@@ -3466,27 +3985,57 @@ async function lookupPhone(phone){
 }
 
 /* =========================================================
+   HOOKS DE ERRORES GLOBALES
+   ========================================================= */
+window.addEventListener('error', (e) => {
+  debugLog('error', 'Excepción no capturada', {
+    msg: e.message,
+    file: e.filename ? e.filename.split('/').pop() : '',
+    line: e.lineno
+  });
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  debugLog('error', 'Promesa rechazada sin capturar', {
+    msg: reason?.message || String(reason)
+  });
+});
+
+/* =========================================================
    INIT
    ========================================================= */
 async function init(){
+  loadDebugLogs();
+
   renderTimes();
   renderCalendar();
   updateProgress();
   updatePersonalization();
 
+  debugLog('info', 'Iniciando BarberLink', {
+    platform: detectPlatform(),
+    browser: detectBrowser()
+  });
+
   passkeySupported = await detectPasskeySupport();
+  debugLog('passkey', `Soporte huella detectado: ${passkeySupported}`);
+  debugLog('device', `HTTPS: ${window.isSecureContext ? 'sí' : 'no'} · Dominio: ${window.location.hostname}`);
+
   await checkSession();
 
   try {
     await Promise.all([loadServices(), loadBusinessHours(), loadBlockedDates()]);
     servicesLoaded = true;
+    debugLog('ok', 'Datos base cargados', { servicios: services.length });
   } catch (e){
-    console.error(e);
+    debugLog('error', 'Error cargando datos base', e.message);
     showGlobalError('No se pudo conectar con el servidor.');
   }
 
   renderServices();
   renderCalendar();
+  debugLog('ok', 'App lista');
 }
 
 /* Listeners */
@@ -3525,7 +4074,7 @@ document.getElementById('authEmail').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); sendOtp(); }
 });
 
-/* ============ OTP LISTENERS ============ */
+/* OTP LISTENERS */
 function scheduleOtpAutoSubmit(){
   clearTimeout(otpAutoSubmitTimer);
   const inputs = document.querySelectorAll('#otpInputs input');
