@@ -246,13 +246,6 @@
     display:none;
   }
   .cover-account.logged .badge-dot{ display:block; }
-  .cover-settings button .settings-hint{
-    position:absolute; bottom:-24px; right:-4px;
-    font-size:8px; letter-spacing:.15em;
-    color:var(--gold); opacity:.65;
-    white-space:nowrap;
-    pointer-events:none;
-  }
   .cover-content{
     position:relative; z-index:2;
     width:100%; max-width:520px;
@@ -1118,7 +1111,6 @@
     border-color:rgba(255,107,107,.5); color:#ff8f8f;
   }
 
-  /* ============ CONSOLA DE DEBUG ============ */
   .console-body{
     width:100%; max-width:560px;
     display:flex; flex-direction:column; gap:14px;
@@ -2148,7 +2140,6 @@ function fallbackCopyLogs(text){
   }
 }
 
-/* Detectar plataforma y navegador */
 function detectPlatform(){
   const ua = navigator.userAgent;
   if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
@@ -2204,6 +2195,8 @@ function renderDebugConsole(){
     ? identities.map(i => i.provider).join(', ')
     : '—';
 
+  const hasPasskeyFlag = userHasPasskey();
+
   el.innerHTML = `
     <div class="console-section">
       <h4><svg style="width:12px;height:12px"><use href="#i-terminal"/></svg> Estado del sistema</h4>
@@ -2248,16 +2241,16 @@ function renderDebugConsole(){
         <span class="console-val ${hasWebAuthn ? 'ok' : 'fail'}">${hasWebAuthn ? 'Disponible ✓' : 'No disponible ✗'}</span>
       </div>
       <div class="console-row">
-        <span class="console-key">Verificación plataforma</span>
-        <span class="console-val ${canCheckPlatform ? 'ok' : 'warn'}">${canCheckPlatform ? 'Soportada ✓' : 'No soportada'}</span>
+        <span class="console-key">Autenticador plataforma</span>
+        <span class="console-val ${canCheckPlatform ? 'ok' : 'warn'}">${canCheckPlatform ? 'Soportado ✓' : 'No soportado'}</span>
       </div>
       <div class="console-row">
         <span class="console-key">Huella lista</span>
         <span class="console-val ${passkeySupported ? 'ok' : 'fail'}">${passkeySupported ? 'Sí ✓' : 'No ✗'}</span>
       </div>
       <div class="console-row">
-        <span class="console-key">Huellas registradas</span>
-        <span class="console-val ${currentPasskeyCount > 0 ? 'ok' : ''}">${currentPasskeyCount}</span>
+        <span class="console-key">Huella registrada</span>
+        <span class="console-val ${hasPasskeyFlag ? 'ok' : ''}">${hasPasskeyFlag ? 'Sí ✓' : 'No'}</span>
       </div>
     </div>
 
@@ -2280,7 +2273,7 @@ function renderDebugConsole(){
         <span class="console-val">${escapeHtml(phone)}</span>
       </div>
       <div class="console-row">
-        <span class="console-key">Proveedores vinculados</span>
+        <span class="console-key">Proveedores</span>
         <span class="console-val dim">${escapeHtml(identitiesStr)}</span>
       </div>
     </div>
@@ -2363,6 +2356,15 @@ async function runPasskeyTest(){
     const { data, error } = await sb.auth.registerPasskey();
 
     if (error){
+      // ⚠️ Si ya estaba registrada, la tratamos como éxito
+      if (isAlreadyRegisteredError(error)){
+        debugLog('warn', 'Huella ya registrada — tratada como activa');
+        markUserHasPasskey();
+        showGlobalSuccess('Esta huella ya estaba activada en este dispositivo');
+        renderDebugConsole();
+        return;
+      }
+
       debugLog('error', 'Supabase devolvió error', {
         code: error.code || '—',
         message: error.message
@@ -2371,10 +2373,10 @@ async function runPasskeyTest(){
     }
 
     debugLog('ok', 'Passkey registrada correctamente', data?.id ? { id: String(data.id).slice(0,8)+'…' } : null);
+    markUserHasPasskey();
 
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
-    currentPasskeyCount = countUserPasskeys();
 
     showGlobalSuccess('¡Huella registrada en este dispositivo!');
     renderDebugConsole();
@@ -2398,7 +2400,6 @@ async function refreshSession(){
     } else {
       currentUser = null;
     }
-    currentPasskeyCount = countUserPasskeys();
     updateAuthUI();
     debugLog('ok', `Sesión: ${currentUser ? 'activa' : 'sin sesión'}`);
     renderDebugConsole();
@@ -2435,7 +2436,6 @@ let otpCooldown = 0;
 let otpAutoSubmitTimer = null;
 
 let passkeySupported = false;
-let currentPasskeyCount = 0;
 
 function startOfToday(){
   const d = new Date(); d.setHours(0,0,0,0); return d;
@@ -2511,7 +2511,7 @@ function updatePersonalization(){
 }
 
 /* =========================================================
-   PASSKEY helpers
+   PASSKEY helpers (nuevos)
    ========================================================= */
 async function detectPasskeySupport(){
   try {
@@ -2523,10 +2523,36 @@ async function detectPasskeySupport(){
   } catch { return false; }
 }
 
-function countUserPasskeys(){
-  if (!currentUser) return 0;
+/* ✅ Ahora comprueba identities + bandera local */
+function userHasPasskey(){
+  if (!currentUser) return false;
+
   const identities = currentUser.identities || [];
-  return identities.filter(i => i.provider === 'passkey').length;
+  if (identities.some(i => i.provider === 'passkey')) return true;
+
+  try {
+    return localStorage.getItem('barberlink_passkey_' + currentUser.id) === '1';
+  } catch { return false; }
+}
+
+function countUserPasskeys(){
+  return userHasPasskey() ? 1 : 0;
+}
+
+function markUserHasPasskey(){
+  if (!currentUser) return;
+  try {
+    localStorage.setItem('barberlink_passkey_' + currentUser.id, '1');
+  } catch {}
+}
+
+/* ✅ Detecta el error de "ya registrada" que puede venir con distintas formas */
+function isAlreadyRegisteredError(e){
+  const code = e?.code || e?.error?.code || '';
+  const msg  = (e?.message || e?.error?.message || '').toLowerCase();
+  return code === 'ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED'
+      || msg.includes('previously registered')
+      || msg.includes('already registered');
 }
 
 function wasPasskeyOnboardingDismissed(){
@@ -2550,7 +2576,6 @@ async function checkSession(){
       if (user) currentUser = user;
     } catch(_){}
   }
-  currentPasskeyCount = countUserPasskeys();
   updateAuthUI();
 }
 
@@ -2569,7 +2594,6 @@ function updateAuthUI(){
 sb.auth.onAuthStateChange((event, session) => {
   debugLog('auth', `Auth event: ${event}`, session?.user?.id ? { uid: session.user.id.slice(0,8)+'…' } : null);
   currentUser = session?.user || null;
-  currentPasskeyCount = countUserPasskeys();
   updateAuthUI();
 });
 
@@ -2815,7 +2839,7 @@ async function verifyOtp(){
 }
 
 /* =========================================================
-   PASSKEY: iniciar sesión
+   PASSKEY: iniciar sesión (ACTUALIZADO)
    ========================================================= */
 async function loginWithPasskey(){
   clearAuthMsgs();
@@ -2828,7 +2852,11 @@ async function loginWithPasskey(){
   try {
     const { error } = await sb.auth.signInWithPasskey();
     if (error) throw error;
-    debugLog('ok', 'Login con huella exitoso');
+
+    // ✅ Si entramos con huella, sabemos al 100% que tiene una passkey
+    markUserHasPasskey();
+    debugLog('ok', 'Login con huella exitoso — passkey marcada');
+
     await onLoginSuccess();
   } catch (e){
     const m = (e && e.message) || '';
@@ -2847,7 +2875,7 @@ async function loginWithPasskey(){
 }
 
 /* =========================================================
-   PASSKEY: registrar huella
+   PASSKEY: registrar huella (ACTUALIZADO — trata ya registrada como éxito)
    ========================================================= */
 async function registerPasskey(){
   if (!currentUser){
@@ -2865,6 +2893,15 @@ async function registerPasskey(){
     const { data, error } = await sb.auth.registerPasskey();
 
     if (error){
+      // ✅ Si ya estaba registrada, la tratamos como éxito
+      if (isAlreadyRegisteredError(error)){
+        debugLog('warn', 'Huella ya registrada — marcando como activa');
+        markUserHasPasskey();
+        showGlobalSuccess('Esta huella ya estaba activada en este dispositivo');
+        renderProfile(dashboardData?.client || {});
+        return;
+      }
+
       debugLog('error', 'Supabase registerPasskey error', {
         code: error.code || '—',
         msg: error.message
@@ -2873,10 +2910,10 @@ async function registerPasskey(){
     }
 
     debugLog('ok', 'Passkey registrada', data?.id ? { id: String(data.id).slice(0,8)+'…' } : null);
+    markUserHasPasskey();
 
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
-    currentPasskeyCount = countUserPasskeys();
 
     showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
     renderProfile(dashboardData?.client || {});
@@ -2886,12 +2923,9 @@ async function registerPasskey(){
 
     debugLog('error', 'registerPasskey falló', { code, msg });
 
-    if (msg.includes('cancel') || msg.includes('aborted') || msg.includes('not allowed')) return;
-    if (msg.includes('already') || msg.includes('exists') || msg.includes('duplicate')){
-      showGlobalError('Ya tienes una huella registrada en este dispositivo.');
-      return;
-    }
-    if (msg.includes('timeout')){ showGlobalError('Se agotó el tiempo. Acerca tu dedo más rápido.'); return; }
+    if (msg.includes('cancel') || msg.includes('aborted') || msg.includes('not allowed')
+        || msg.includes('timed out')) return;
+
     if (msg.includes('not supported') || msg.includes('not available')){
       showGlobalError('Tu dispositivo no tiene huella configurada. Configúrala en Ajustes primero.');
       return;
@@ -2900,18 +2934,19 @@ async function registerPasskey(){
       showGlobalError('Error de configuración del dominio.');
       return;
     }
+
     const hint = e?.message ? ` (${e.message.slice(0, 60)})` : '';
     showGlobalError('No pudimos activar la huella' + hint);
   }
 }
 
 /* =========================================================
-   PASSKEY: onboarding
+   PASSKEY: onboarding (ACTUALIZADO)
    ========================================================= */
 function shouldOfferPasskeyOnboarding(){
   if (!passkeySupported) return false;
   if (!currentUser) return false;
-  if (currentPasskeyCount > 0) return false;
+  if (userHasPasskey()) return false;   // ✅ usa la nueva función
   if (wasPasskeyOnboardingDismissed()) return false;
   return true;
 }
@@ -2927,9 +2962,10 @@ async function activatePasskeyOnboarding(){
     const { error } = await sb.auth.registerPasskey();
     if (error) throw error;
 
+    markUserHasPasskey();
+
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
-    currentPasskeyCount = countUserPasskeys();
 
     debugLog('ok', 'Huella activada desde onboarding');
     showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
@@ -2938,16 +2974,22 @@ async function activatePasskeyOnboarding(){
     await loadDashboard();
     showStep(7);
   } catch (e){
-    const m = (e?.message || '').toLowerCase();
-    debugLog('error', 'Onboarding passkey falló', e?.message || '');
-
-    if (m.includes('cancel') || m.includes('aborted')) return;
-    if (m.includes('already') || m.includes('exists')){
+    // ✅ Huella ya estaba registrada — tratamos como éxito
+    if (isAlreadyRegisteredError(e)){
+      debugLog('warn', 'Huella ya registrada en onboarding — marcando como activa');
+      markUserHasPasskey();
       markPasskeyOnboardingDismissed();
+      showGlobalSuccess('Esta huella ya estaba activada');
       await loadDashboard();
       showStep(7);
       return;
     }
+
+    const m = (e?.message || '').toLowerCase();
+    debugLog('error', 'Onboarding passkey falló', e?.message || '');
+
+    if (m.includes('cancel') || m.includes('aborted')) return;
+
     showGlobalError('No pudimos activar la huella' + (e?.message ? ` (${e.message.slice(0,60)})` : ''));
   } finally {
     btn.disabled = false;
@@ -2977,7 +3019,6 @@ async function onLoginSuccess(){
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
   } catch(_){}
-  currentPasskeyCount = countUserPasskeys();
 
   if (shouldOfferPasskeyOnboarding()){
     showStep(8);
@@ -2995,7 +3036,6 @@ async function logout(){
   await sb.auth.signOut();
   currentUser = null;
   dashboardData = null;
-  currentPasskeyCount = 0;
   updateAuthUI();
   showStep(0);
 }
@@ -3228,7 +3268,7 @@ function renderProfile(c){
   const el = document.getElementById('profileContent');
   const birth = c.birth_date ? formatLongDate(c.birth_date) : 'No definido';
   const tierLabel = ({bronze:'Bronce',silver:'Plata',gold:'Oro'})[c.loyalty_tier] || 'Bronce';
-  const hasPasskey = currentPasskeyCount > 0;
+  const hasPasskey = userHasPasskey();   // ✅ usa la nueva función
 
   el.innerHTML = `
     <div class="profile-row">
@@ -3264,10 +3304,10 @@ function renderProfile(c){
       <div class="ic"><svg><use href="#i-fingerprint"/></svg></div>
       <div class="txt">
         <div class="lbl">Acceso con huella</div>
-        <div class="val">${hasPasskey ? `Activado (${currentPasskeyCount})` : 'No configurado'}</div>
+        <div class="val">${hasPasskey ? 'Activado en este dispositivo' : 'No configurado'}</div>
       </div>
       <button class="edit" onclick="registerPasskey()">
-        ${hasPasskey ? '+ Añadir otra' : 'Activar'}
+        ${hasPasskey ? 'Re-activar' : 'Activar'}
       </button>
     </div>
     ` : ''}
