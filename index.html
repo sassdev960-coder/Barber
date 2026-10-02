@@ -835,6 +835,65 @@
     font-size:11.5px; color:var(--muted); line-height:1.4;
   }
 
+  /* ============ PHONE ONBOARDING (nueva pantalla) ============ */
+  .phone-onboard{
+    width:100%; max-width:520px;
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center; margin-block:auto;
+    padding-bottom: var(--safe-bottom);
+  }
+  .phone-hero{
+    width:96px; height:96px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gold);
+    margin-bottom:24px;
+    position:relative;
+    background:radial-gradient(circle,
+      rgba(217,178,115,.18) 0%,
+      rgba(217,178,115,.05) 50%,
+      transparent 75%);
+    animation:pop .55s cubic-bezier(.22,.61,.36,1);
+  }
+  .phone-hero svg{
+    width:44px; height:44px;
+    position:relative; z-index:1;
+    filter:drop-shadow(0 0 12px rgba(217,178,115,.6));
+  }
+  .phone-onboard h2{
+    font-family:'Playfair Display',serif;
+    font-size:clamp(26px,6vw,34px);
+    font-weight:500; color:var(--gold-2);
+    letter-spacing:.01em; margin-bottom:10px;
+    text-wrap:balance;
+  }
+  .phone-onboard .lead{
+    font-size:14px; color:var(--text-2); font-weight:300;
+    line-height:1.55; margin-bottom:24px;
+    max-width:380px;
+  }
+  .phone-onboard .info-card{
+    width:100%;
+    background:linear-gradient(180deg,rgba(217,178,115,.06),rgba(217,178,115,.02));
+    border:1px solid var(--gold-border);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:22px;
+    text-align:left;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .phone-onboard .info-card svg{
+    width:18px; height:18px; color:var(--gold);
+    flex-shrink:0; margin-top:2px;
+  }
+  .phone-onboard .info-card p{
+    font-size:12px; color:var(--text-2);
+    line-height:1.55;
+  }
+  .phone-onboard .info-card strong{ color:var(--gold-2); font-weight:500; }
+
   .dash-hero{
     width:100%; max-width:520px;
     display:flex; align-items:center; gap:14px; margin-bottom:22px;
@@ -1300,6 +1359,8 @@
     .points-value{ font-size:30px; }
     .fingerprint-hero{ width:96px; height:96px; }
     .fingerprint-hero svg{ width:44px; height:44px; }
+    .phone-hero{ width:84px; height:84px; }
+    .phone-hero svg{ width:38px; height:38px; }
     .cover-top{ top: calc(32px + var(--safe-top)); }
     .cover-logo{ width:100px; max-height:74px; }
     .console-body{ gap:12px; }
@@ -1317,7 +1378,8 @@
     .section-heading h2.animate{ animation:none; }
     .fingerprint-hero,
     .fingerprint-hero::before,
-    .fingerprint-hero::after{ animation:none; }
+    .fingerprint-hero::after,
+    .phone-hero{ animation:none; }
   }
 </style>
 </head>
@@ -1428,6 +1490,10 @@
   <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9c2.5 0 4.8 1 6.4 2.6"/>
     <path d="M21 3v6h-6"/>
+  </symbol>
+  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
   </symbol>
 </svg>
 
@@ -1738,7 +1804,7 @@
 
       <div class="save-account" id="saveAccountBox" style="display:none">
         <h4>Guarda tu reserva en tu cuenta</h4>
-        <p>Crea tu cuenta para ver, reagendar y cancelar tus citas. Suma puntos con cada visita.</p>
+        <p>Crea tu cuenta con tu celular y todas tus reservas se vincularán automáticamente. Suma puntos con cada visita.</p>
         <button class="btn sm" onclick="openAuth()">
           <svg><use href="#i-user"/></svg>
           <span>Crear mi cuenta</span>
@@ -2023,6 +2089,51 @@
     </div>
   </section>
 
+  <!-- ======================== PHONE ONBOARDING (NUEVA) ======================== -->
+  <section class="screen" data-step="10">
+    <div class="phone-onboard">
+      <div class="phone-hero">
+        <svg><use href="#i-phone"/></svg>
+      </div>
+
+      <h2>Confirma tu celular</h2>
+      <p class="lead">Vinculamos tus reservas hechas antes de crear la cuenta a través de tu número de celular.</p>
+
+      <div class="info-card">
+        <svg><use href="#i-link"/></svg>
+        <p>
+          Si reservaste antes de tener cuenta, ingresa <strong>el mismo celular</strong> que usaste al reservar y las migraremos automáticamente a tu panel.
+        </p>
+      </div>
+
+      <div class="form-fields">
+        <label class="field phone-field" for="onboardingPhone">
+          <svg class="f-icon"><use href="#i-phone"/></svg>
+          <div class="field-body">
+            <span class="field-label">Celular</span>
+            <div style="display:flex;align-items:center">
+              <span class="phone-prefix">+591</span>
+              <input class="field-input" type="tel" id="onboardingPhone" inputmode="numeric"
+                     maxlength="8" placeholder="70123456" autocomplete="tel-national"/>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <p class="form-error" id="phoneOnboardingError" role="alert"></p>
+
+      <div class="nav-buttons" style="width:100%;max-width:520px">
+        <button class="btn" id="btnSavePhone" onclick="saveMyPhone()">
+          <svg><use href="#i-link"/></svg>
+          <span>Guardar y vincular reservas</span>
+        </button>
+        <button class="btn ghost" onclick="skipPhoneOnboarding()">
+          <span>Omitir por ahora</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2189,6 +2300,7 @@ function renderDebugConsole(){
   const uid = currentUser?.id ? currentUser.id.slice(0, 8) + '…' : '—';
   const email = currentUser?.email || '—';
   const phone = currentUser?.phone || '—';
+  const clientPhone = dashboardData?.client?.phone || '—';
 
   const identities = currentUser?.identities || [];
   const identitiesStr = identities.length
@@ -2265,12 +2377,16 @@ function renderDebugConsole(){
         <span class="console-val">${escapeHtml(uid)}</span>
       </div>
       <div class="console-row">
-        <span class="console-key">Email</span>
+        <span class="console-key">Email auth</span>
         <span class="console-val">${escapeHtml(email)}</span>
       </div>
       <div class="console-row">
-        <span class="console-key">Teléfono</span>
+        <span class="console-key">Teléfono auth</span>
         <span class="console-val">${escapeHtml(phone)}</span>
+      </div>
+      <div class="console-row">
+        <span class="console-key">Teléfono perfil</span>
+        <span class="console-val ${clientPhone !== '—' ? 'ok' : 'warn'}">${escapeHtml(clientPhone)}</span>
       </div>
       <div class="console-row">
         <span class="console-key">Proveedores</span>
@@ -2356,7 +2472,6 @@ async function runPasskeyTest(){
     const { data, error } = await sb.auth.registerPasskey();
 
     if (error){
-      // ⚠️ Si ya estaba registrada, la tratamos como éxito
       if (isAlreadyRegisteredError(error)){
         debugLog('warn', 'Huella ya registrada — tratada como activa');
         markUserHasPasskey();
@@ -2511,7 +2626,7 @@ function updatePersonalization(){
 }
 
 /* =========================================================
-   PASSKEY helpers (nuevos)
+   PASSKEY helpers
    ========================================================= */
 async function detectPasskeySupport(){
   try {
@@ -2523,7 +2638,6 @@ async function detectPasskeySupport(){
   } catch { return false; }
 }
 
-/* ✅ Ahora comprueba identities + bandera local */
 function userHasPasskey(){
   if (!currentUser) return false;
 
@@ -2535,10 +2649,6 @@ function userHasPasskey(){
   } catch { return false; }
 }
 
-function countUserPasskeys(){
-  return userHasPasskey() ? 1 : 0;
-}
-
 function markUserHasPasskey(){
   if (!currentUser) return;
   try {
@@ -2546,7 +2656,6 @@ function markUserHasPasskey(){
   } catch {}
 }
 
-/* ✅ Detecta el error de "ya registrada" que puede venir con distintas formas */
 function isAlreadyRegisteredError(e){
   const code = e?.code || e?.error?.code || '';
   const msg  = (e?.message || e?.error?.message || '').toLowerCase();
@@ -2839,7 +2948,7 @@ async function verifyOtp(){
 }
 
 /* =========================================================
-   PASSKEY: iniciar sesión (ACTUALIZADO)
+   PASSKEY: iniciar sesión
    ========================================================= */
 async function loginWithPasskey(){
   clearAuthMsgs();
@@ -2853,7 +2962,6 @@ async function loginWithPasskey(){
     const { error } = await sb.auth.signInWithPasskey();
     if (error) throw error;
 
-    // ✅ Si entramos con huella, sabemos al 100% que tiene una passkey
     markUserHasPasskey();
     debugLog('ok', 'Login con huella exitoso — passkey marcada');
 
@@ -2875,7 +2983,7 @@ async function loginWithPasskey(){
 }
 
 /* =========================================================
-   PASSKEY: registrar huella (ACTUALIZADO — trata ya registrada como éxito)
+   PASSKEY: registrar huella
    ========================================================= */
 async function registerPasskey(){
   if (!currentUser){
@@ -2893,7 +3001,6 @@ async function registerPasskey(){
     const { data, error } = await sb.auth.registerPasskey();
 
     if (error){
-      // ✅ Si ya estaba registrada, la tratamos como éxito
       if (isAlreadyRegisteredError(error)){
         debugLog('warn', 'Huella ya registrada — marcando como activa');
         markUserHasPasskey();
@@ -2941,12 +3048,12 @@ async function registerPasskey(){
 }
 
 /* =========================================================
-   PASSKEY: onboarding (ACTUALIZADO)
+   PASSKEY: onboarding
    ========================================================= */
 function shouldOfferPasskeyOnboarding(){
   if (!passkeySupported) return false;
   if (!currentUser) return false;
-  if (userHasPasskey()) return false;   // ✅ usa la nueva función
+  if (userHasPasskey()) return false;
   if (wasPasskeyOnboardingDismissed()) return false;
   return true;
 }
@@ -2974,7 +3081,6 @@ async function activatePasskeyOnboarding(){
     await loadDashboard();
     showStep(7);
   } catch (e){
-    // ✅ Huella ya estaba registrada — tratamos como éxito
     if (isAlreadyRegisteredError(e)){
       debugLog('warn', 'Huella ya registrada en onboarding — marcando como activa');
       markUserHasPasskey();
@@ -3005,25 +3111,127 @@ async function skipPasskeyOnboarding(){
 }
 
 /* =========================================================
+   PHONE ONBOARDING — vincular reservas por celular
+   ========================================================= */
+async function saveMyPhone(){
+  const input = document.getElementById('onboardingPhone');
+  const phone = input.value.trim();
+  const errEl = document.getElementById('phoneOnboardingError');
+
+  if (!/^[67]\d{7}$/.test(phone)){
+    errEl.textContent = 'Celular inválido: 8 dígitos, empieza en 6 o 7';
+    errEl.classList.add('visible');
+    shake(input.closest('.field'));
+    input.closest('.field').classList.add('invalid');
+    return;
+  }
+  errEl.classList.remove('visible');
+  input.closest('.field').classList.remove('invalid');
+
+  const btn = document.getElementById('btnSavePhone');
+  const original = btn.querySelector('span').textContent;
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Vinculando…';
+
+  debugLog('phone', 'Guardando teléfono: ' + phone);
+
+  try {
+    // 1. Guardar teléfono en el perfil del cliente
+    const { error: profileError } = await sb.rpc('update_my_profile', {
+      p_phone: phone
+    });
+    if (profileError) throw profileError;
+
+    debugLog('ok', 'Teléfono guardado en el perfil');
+
+    // 2. Vincular reservas huérfanas que coincidan con ese teléfono
+    const { data: linked, error: linkError } = await sb.rpc('link_my_bookings');
+    if (linkError) throw linkError;
+
+    const linkedCount = Number(linked) || 0;
+    debugLog('ok', `Reservas vinculadas: ${linkedCount}`);
+
+    // 3. Recargar dashboard
+    await loadDashboard();
+
+    // 4. Mostrar mensaje
+    if (linkedCount > 0){
+      showGlobalSuccess(`¡${linkedCount} reserva${linkedCount > 1 ? 's' : ''} vinculada${linkedCount > 1 ? 's' : ''} a tu cuenta!`);
+    } else {
+      showGlobalSuccess('Celular guardado. Cuando reserves se sumará a tu cuenta.');
+    }
+
+    // 5. Continuar flujo
+    await continueAfterPhone();
+  } catch (e){
+    debugLog('error', 'Error guardando teléfono', e?.message || '');
+
+    const msg = (e?.message || '').toLowerCase();
+    if (msg.includes('invalid_phone')){
+      errEl.textContent = 'Celular inválido';
+    } else if (msg.includes('not_authenticated')){
+      errEl.textContent = 'Sesión expirada. Vuelve a entrar.';
+    } else {
+      errEl.textContent = 'No pudimos guardar tu celular. Intenta de nuevo.';
+    }
+    errEl.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    btn.querySelector('span').textContent = original;
+  }
+}
+
+async function skipPhoneOnboarding(){
+  debugLog('phone', 'Usuario omitió vincular teléfono');
+  await continueAfterPhone();
+}
+
+async function continueAfterPhone(){
+  if (shouldOfferPasskeyOnboarding()){
+    showStep(8);
+  } else {
+    await loadDashboard();
+    showStep(7);
+  }
+}
+
+/* =========================================================
    POST-LOGIN
    ========================================================= */
 async function onLoginSuccess(){
-  try {
-    const { data: linked } = await sb.rpc('link_my_bookings');
-    if (linked && linked > 0){
-      showGlobalSuccess(`${linked} reserva${linked > 1 ? 's' : ''} vinculada${linked > 1 ? 's' : ''} a tu cuenta`);
-    }
-  } catch(_) {}
-
   try {
     const { data: { user } } = await sb.auth.getUser();
     if (user) currentUser = user;
   } catch(_){}
 
+  // Cargar dashboard para saber si ya tiene teléfono guardado
+  await loadDashboard();
+
+  const hasPhone = !!dashboardData?.client?.phone;
+
+  if (!hasPhone){
+    debugLog('phone', 'Usuario sin teléfono en perfil — solicitando');
+    // No tiene teléfono → pedirlo para poder vincular reservas
+    showStep(10);
+    return;
+  }
+
+  // Tiene teléfono → vincular reservas huérfanas por si acaso
+  try {
+    const { data: linked } = await sb.rpc('link_my_bookings');
+    const linkedCount = Number(linked) || 0;
+    if (linkedCount > 0){
+      debugLog('ok', `${linkedCount} reservas vinculadas en login`);
+      showGlobalSuccess(`${linkedCount} reserva${linkedCount > 1 ? 's' : ''} vinculada${linkedCount > 1 ? 's' : ''} a tu cuenta`);
+      // Recargar dashboard con las reservas nuevas
+      await loadDashboard();
+    }
+  } catch(_) {}
+
+  // Continuar flujo normal
   if (shouldOfferPasskeyOnboarding()){
     showStep(8);
   } else {
-    await loadDashboard();
     showStep(7);
   }
 }
@@ -3268,7 +3476,8 @@ function renderProfile(c){
   const el = document.getElementById('profileContent');
   const birth = c.birth_date ? formatLongDate(c.birth_date) : 'No definido';
   const tierLabel = ({bronze:'Bronce',silver:'Plata',gold:'Oro'})[c.loyalty_tier] || 'Bronce';
-  const hasPasskey = userHasPasskey();   // ✅ usa la nueva función
+  const hasPasskey = userHasPasskey();
+  const hasPhone = !!c.phone;
 
   el.innerHTML = `
     <div class="profile-row">
@@ -3282,8 +3491,11 @@ function renderProfile(c){
       <div class="ic"><svg><use href="#i-phone"/></svg></div>
       <div class="txt">
         <div class="lbl">Celular</div>
-        <div class="val">${c.phone ? '+591 ' + escapeHtml(c.phone) : '—'}</div>
+        <div class="val">${c.phone ? '+591 ' + escapeHtml(c.phone) : 'No configurado'}</div>
       </div>
+      <button class="edit" onclick="openPhoneOnboarding()">
+        ${hasPhone ? 'Cambiar' : 'Añadir'}
+      </button>
     </div>
     <div class="profile-row">
       <div class="ic"><svg><use href="#i-calendar"/></svg></div>
@@ -3318,6 +3530,15 @@ function renderProfile(c){
       </button>
     </div>
   `;
+}
+
+/* Abre la pantalla de teléfono desde el perfil (botón Cambiar/Añadir) */
+function openPhoneOnboarding(){
+  const input = document.getElementById('onboardingPhone');
+  const currentPhone = dashboardData?.client?.phone || '';
+  input.value = currentPhone;
+  document.getElementById('phoneOnboardingError').classList.remove('visible');
+  showStep(10);
 }
 
 /* =========================================================
@@ -3493,6 +3714,13 @@ function onStepEnter(n){
     }, 420);
   }
   if (n === 2 && !servicesLoaded) initServices();
+  if (n === 10){
+    // Autofocus en el input de teléfono de onboarding
+    setTimeout(() => {
+      const inp = document.getElementById('onboardingPhone');
+      if (inp && !inp.value) inp.focus({ preventScroll: true });
+    }, 400);
+  }
   if (n >= 1 && n <= 4) updatePersonalization();
 }
 
@@ -4112,6 +4340,16 @@ document.getElementById('authPhone').addEventListener('keydown', e => {
 });
 document.getElementById('authEmail').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); sendOtp(); }
+});
+
+/* Listener para el input de teléfono de onboarding */
+document.getElementById('onboardingPhone').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g,'').slice(0,8);
+  e.target.closest('.field').classList.remove('invalid');
+  document.getElementById('phoneOnboardingError').classList.remove('visible');
+});
+document.getElementById('onboardingPhone').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); saveMyPhone(); }
 });
 
 /* OTP LISTENERS */
