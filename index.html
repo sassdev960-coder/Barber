@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0a0a"/>
 <title>BARBERLINK — Reserva tu cita</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,23 +22,38 @@
     --gold-border:rgba(217,178,115,.40);
     --danger:#ff6b6b; --success:#30d158;
     --radius:14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
   }
   *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ height:100%; }
+  html{
+    height:100%;
+    height:100dvh;
+    overscroll-behavior:none;
+  }
   body{
     font-family:'Inter',system-ui,sans-serif;
     background:var(--bg); color:var(--text);
+    height:100%;
+    height:100dvh;
     overflow:hidden; -webkit-font-smoothing:antialiased;
+    overscroll-behavior:none;
   }
   button{ font-family:inherit; }
   svg{ display:block; }
 
-  .app{ position:relative; width:100vw; height:100vh; overflow:hidden; }
+  .app{ position:relative; width:100vw; height:100vh; height:100dvh; overflow:hidden; }
 
   .screen{
     position:absolute; inset:0;
     display:flex; flex-direction:column; align-items:center;
-    padding:22px 20px 40px;
+    padding:
+      calc(22px + var(--safe-top))
+      calc(20px + var(--safe-right))
+      calc(40px + var(--safe-bottom))
+      calc(20px + var(--safe-left));
     overflow-y:auto; overscroll-behavior:contain;
     -webkit-overflow-scrolling:touch;
     opacity:0; visibility:hidden;
@@ -176,7 +192,9 @@
       rgba(0,0,0,.85) 100%);
   }
   .cover-top{
-    position:absolute; top:44px; left:0; right:0;
+    position:absolute;
+    top: calc(44px + var(--safe-top));
+    left:0; right:0;
     display:flex; flex-direction:column; align-items:center; gap:12px;
     z-index:2;
   }
@@ -192,7 +210,10 @@
     text-shadow:0 2px 8px rgba(0,0,0,.8);
   }
   .cover-account{
-    position:absolute; top:16px; right:16px; z-index:3;
+    position:absolute;
+    top: calc(16px + var(--safe-top));
+    right: calc(16px + var(--safe-right));
+    z-index:3;
   }
   .cover-account button{
     width:42px; height:42px; border-radius:50%;
@@ -218,7 +239,8 @@
   .cover-content{
     position:relative; z-index:2;
     width:100%; max-width:520px;
-    padding:0 28px 44px; text-align:center;
+    padding:0 calc(28px + var(--safe-right)) calc(44px + var(--safe-bottom)) calc(28px + var(--safe-left));
+    text-align:center;
   }
   .cover-title{
     font-family:'Playfair Display',serif;
@@ -548,6 +570,7 @@
     width:100%; max-width:520px;
     display:flex; flex-direction:column; align-items:center;
     text-align:center; margin-block:auto;
+    padding-bottom: var(--safe-bottom);
   }
   .success-icon{
     width:78px; height:78px;
@@ -678,7 +701,6 @@
   }
   .btn-passkey .fingerprint{ color:var(--gold); }
 
-  /* ============ OTP INPUTS (8 casillas) ============ */
   .otp-inputs{
     display:flex; gap:6px; justify-content:center;
     margin:24px 0 14px;
@@ -725,11 +747,11 @@
   }
   .auth-back button:hover{ color:#fff; }
 
-  /* ============ PASSKEY ONBOARDING (nueva pantalla) ============ */
   .passkey-onboard{
     width:100%; max-width:520px;
     display:flex; flex-direction:column; align-items:center;
     text-align:center; margin-block:auto;
+    padding-bottom: var(--safe-bottom);
   }
   .fingerprint-hero{
     width:110px; height:110px;
@@ -809,7 +831,6 @@
     font-size:11.5px; color:var(--muted); line-height:1.4;
   }
 
-  /* ============ DASHBOARD ============ */
   .dash-hero{
     width:100%; max-width:520px;
     display:flex; align-items:center; gap:14px; margin-bottom:22px;
@@ -1047,6 +1068,7 @@
     position:sticky; bottom:0;
     width:100%; max-width:520px;
     padding-top:12px; margin-top:12px;
+    padding-bottom: var(--safe-bottom);
     background:linear-gradient(180deg,transparent,var(--bg) 30%);
     z-index:5;
   }
@@ -1086,7 +1108,9 @@
   }
 
   .progress{
-    position:fixed; top:18px; left:50%;
+    position:fixed;
+    top: calc(18px + var(--safe-top));
+    left:50%;
     transform:translateX(-50%);
     display:flex; gap:6px; z-index:20;
     opacity:0; transition:opacity .4s ease;
@@ -1101,10 +1125,12 @@
   .progress span.active{ background:var(--gold); width:32px; }
 
   .global-error{
-    position:fixed; top:0; left:0; right:0;
+    position:fixed;
+    top:0; left:0; right:0;
     background:#3a1010; color:#ffd0d0;
     font-size:12px; letter-spacing:.03em;
-    padding:11px 16px; text-align:center;
+    padding: calc(11px + var(--safe-top)) 16px 11px;
+    text-align:center;
     z-index:100; display:none;
     border-bottom:1px solid rgba(255,107,107,.3);
   }
@@ -1114,10 +1140,12 @@
     to{ transform:translateY(0); }
   }
   .global-success{
-    position:fixed; top:0; left:0; right:0;
+    position:fixed;
+    top:0; left:0; right:0;
     background:#0d2a18; color:#b8f0c8;
     font-size:12px; letter-spacing:.03em;
-    padding:11px 16px; text-align:center;
+    padding: calc(11px + var(--safe-top)) 16px 11px;
+    text-align:center;
     z-index:100; display:none;
     border-bottom:1px solid rgba(48,209,88,.3);
   }
@@ -1141,16 +1169,24 @@
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
   @media (max-width:600px){
-    .screen{ padding:20px 18px 32px; }
+    .screen{
+      padding:
+        calc(18px + var(--safe-top))
+        calc(16px + var(--safe-right))
+        calc(30px + var(--safe-bottom))
+        calc(16px + var(--safe-left));
+    }
     .summary{ padding:6px 16px; }
     .cal-header h4{ font-size:16px; }
     .svc-top h3{ font-size:15.5px; }
     .points-value{ font-size:30px; }
     .fingerprint-hero{ width:96px; height:96px; }
     .fingerprint-hero svg{ width:44px; height:44px; }
+    .cover-top{ top: calc(32px + var(--safe-top)); }
+    .cover-logo{ width:100px; max-height:74px; }
   }
   @media (max-height:700px){
-    .cover-content{ padding-bottom:36px; }
+    .cover-content{ padding-bottom: calc(32px + var(--safe-bottom)); }
     .section-heading{ margin-bottom:20px; }
   }
   @media (prefers-reduced-motion:reduce){
@@ -1571,10 +1607,17 @@
       </div>
 
       <div class="success-actions">
+        <!-- Botón solo visible si hay sesión activa -->
+        <button class="btn" id="btnBackToAccount" onclick="backToAccountFromSuccess()" style="display:none">
+          <svg><use href="#i-user-circle"/></svg>
+          <span>Ir a mi cuenta</span>
+        </button>
+
         <button class="btn" onclick="downloadICS()">
           <svg><use href="#i-calendar"/></svg>
           <span>Añadir a calendario</span>
         </button>
+
         <button class="btn ghost" onclick="resetAll()">
           <span>Nueva reserva</span>
         </button>
@@ -1596,7 +1639,6 @@
     </header>
 
     <div class="section">
-      <!-- PASO A: elegir método -->
       <div id="authStepA">
         <div class="section-heading">
           <h2>Entra a tu cuenta</h2>
@@ -1658,7 +1700,6 @@
         </div>
       </div>
 
-      <!-- PASO B: verificar código -->
       <div id="authStepB" style="display:none">
         <div class="section-heading">
           <h2>Ingresa el código</h2>
@@ -1773,7 +1814,7 @@
     </div>
   </section>
 
-  <!-- ======================== PASSKEY ONBOARDING (post-login) ======================== -->
+  <!-- ======================== PASSKEY ONBOARDING ======================== -->
   <section class="screen" data-step="8">
     <div class="passkey-onboard">
       <div class="fingerprint-hero">
@@ -1872,7 +1913,7 @@ let otpCooldown = 0;
 let otpAutoSubmitTimer = null;
 
 let passkeySupported = false;
-let shouldShowPasskeyOnboarding = false;   // se activa tras un login nuevo
+let currentPasskeyCount = 0;
 
 function startOfToday(){
   const d = new Date(); d.setHours(0,0,0,0); return d;
@@ -1901,7 +1942,7 @@ function showGlobalError(msg){
   el.textContent = msg;
   el.classList.add('visible');
   clearTimeout(showGlobalError._t);
-  showGlobalError._t = setTimeout(() => el.classList.remove('visible'), 6000);
+  showGlobalError._t = setTimeout(() => el.classList.remove('visible'), 7000);
 }
 function showGlobalSuccess(msg){
   const el = document.getElementById('globalSuccess');
@@ -1947,7 +1988,7 @@ function updatePersonalization(){
 }
 
 /* =========================================================
-   PASSKEY: detección de soporte
+   PASSKEY helpers
    ========================================================= */
 async function detectPasskeySupport(){
   try {
@@ -1959,8 +2000,10 @@ async function detectPasskeySupport(){
   } catch { return false; }
 }
 
-function userHasPasskey(){
-  return !!currentUser?.identities?.some(i => i.provider === 'passkey');
+function countUserPasskeys(){
+  if (!currentUser) return 0;
+  const identities = currentUser.identities || [];
+  return identities.filter(i => i.provider === 'passkey').length;
 }
 
 function wasPasskeyOnboardingDismissed(){
@@ -1978,6 +2021,14 @@ function markPasskeyOnboardingDismissed(){
 async function checkSession(){
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user || null;
+  if (currentUser){
+    // Refrescar para tener las identities más recientes
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) currentUser = user;
+    } catch(_){}
+  }
+  currentPasskeyCount = countUserPasskeys();
   updateAuthUI();
 }
 
@@ -2049,14 +2100,13 @@ function clearAuthMsgs(){
 }
 
 /* =========================================================
-   ENVIAR OTP (SMS o Email)
+   ENVIAR OTP
    ========================================================= */
 async function sendOtp(){
   clearAuthMsgs();
   const btn = document.getElementById('btnSendOtp');
   const original = btn.querySelector('span').textContent;
 
-  /* ============ MODO TELÉFONO ============ */
   if (authMode === 'phone'){
     const ph = document.getElementById('authPhone').value.trim();
     if (!/^[67]\d{7}$/.test(ph)){
@@ -2095,7 +2145,6 @@ async function sendOtp(){
     return;
   }
 
-  /* ============ MODO EMAIL ============ */
   const email = document.getElementById('authEmail').value.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     authError('Ingresa un correo válido');
@@ -2265,23 +2314,77 @@ async function loginWithPasskey(){
 }
 
 /* =========================================================
-   PASSKEY: registrar huella (desde el perfil)
+   PASSKEY: registrar huella — versión mejorada
    ========================================================= */
 async function registerPasskey(){
-  if (!currentUser) return;
+  if (!currentUser){
+    showGlobalError('Primero debes iniciar sesión');
+    return;
+  }
+
+  if (!passkeySupported){
+    showGlobalError('Tu dispositivo no soporta huella digital');
+    return;
+  }
+
   try {
-    const { error } = await sb.auth.registerPasskey();
-    if (error) throw error;
-    showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
+    console.log('[passkey] Iniciando registro...');
+    console.log('[passkey] User ID:', currentUser.id);
+    console.log('[passkey] Domain:', window.location.hostname);
+
+    const { data, error } = await sb.auth.registerPasskey();
+
+    if (error){
+      console.error('[passkey] Supabase error:', error);
+      throw error;
+    }
+
+    console.log('[passkey] Registro exitoso:', data);
+
+    // Refrescar usuario para actualizar identities
     const { data: { user } } = await sb.auth.getUser();
-    currentUser = user;
+    if (user) currentUser = user;
+    currentPasskeyCount = countUserPasskeys();
+
+    showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
     renderProfile(dashboardData?.client || {});
   } catch (e){
-    console.error('[passkey register]', e);
-    const m = (e && e.message) || '';
-    if (!m.toLowerCase().includes('cancel')){
-      showGlobalError('No pudimos activar la huella. Intenta de nuevo.');
+    console.error('[passkey register] Error completo:', e);
+
+    // Extraer mensaje lo más descriptivo posible
+    const code = e?.code || e?.error?.code || '';
+    const msg  = (e?.message || e?.error?.message || e?.toString() || '').toLowerCase();
+
+    console.log('[passkey] Código:', code, 'Mensaje:', msg);
+
+    if (msg.includes('cancel') || msg.includes('aborted') || msg.includes('not allowed')){
+      // Usuario canceló el diálogo - silencioso
+      return;
     }
+
+    if (msg.includes('already') || msg.includes('exists') || msg.includes('duplicate')){
+      showGlobalError('Ya tienes una huella registrada en este dispositivo. Intenta con otro dispositivo o contacta a soporte.');
+      return;
+    }
+
+    if (msg.includes('timeout') || msg.includes('timed out')){
+      showGlobalError('Se agotó el tiempo. Acerca tu dedo al sensor más rápido.');
+      return;
+    }
+
+    if (msg.includes('not supported') || msg.includes('not available')){
+      showGlobalError('Tu dispositivo no tiene configurada una huella. Configúrala en Ajustes primero.');
+      return;
+    }
+
+    if (msg.includes('domain') || msg.includes('rp id') || msg.includes('origin')){
+      showGlobalError('Error de configuración del dominio. Contacta a soporte.');
+      return;
+    }
+
+    // Error genérico con pista del mensaje real
+    const hint = e?.message ? ` (${e.message.slice(0, 60)})` : '';
+    showGlobalError('No pudimos activar la huella' + hint + '. Intenta de nuevo.');
   }
 }
 
@@ -2291,7 +2394,7 @@ async function registerPasskey(){
 function shouldOfferPasskeyOnboarding(){
   if (!passkeySupported) return false;
   if (!currentUser) return false;
-  if (userHasPasskey()) return false;
+  if (currentPasskeyCount > 0) return false;
   if (wasPasskeyOnboardingDismissed()) return false;
   return true;
 }
@@ -2306,24 +2409,29 @@ async function activatePasskeyOnboarding(){
     const { error } = await sb.auth.registerPasskey();
     if (error) throw error;
 
-    // Refrescar el usuario para actualizar identities
     const { data: { user } } = await sb.auth.getUser();
-    currentUser = user;
+    if (user) currentUser = user;
+    currentPasskeyCount = countUserPasskeys();
 
     showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
-    markPasskeyOnboardingDismissed(); // no volver a mostrarlo
+    markPasskeyOnboardingDismissed();
 
     await loadDashboard();
     showStep(7);
   } catch (e){
     console.error('[passkey onboarding]', e);
-    const m = (e && e.message) || '';
-    if (m.toLowerCase().includes('cancel')){
-      // usuario canceló el diálogo biométrico
-    } else if (m.toLowerCase().includes('not allowed')){
-      showGlobalError('Tu dispositivo no permitió activar la huella.');
+    const m = (e?.message || '').toLowerCase();
+
+    if (m.includes('cancel') || m.includes('aborted')){
+      // usuario canceló, no hacer nada
+    } else if (m.includes('already') || m.includes('exists')){
+      showGlobalError('Ya tienes una huella registrada en este dispositivo.');
+      markPasskeyOnboardingDismissed();
+      await loadDashboard();
+      showStep(7);
     } else {
-      showGlobalError('No pudimos activar la huella. Intenta de nuevo.');
+      const hint = e?.message ? ` (${e.message.slice(0, 60)})` : '';
+      showGlobalError('No pudimos activar la huella' + hint);
     }
   } finally {
     btn.disabled = false;
@@ -2348,7 +2456,13 @@ async function onLoginSuccess(){
     }
   } catch(_) {}
 
-  // Decidir si mostrar onboarding de huella o ir directo al dashboard
+  // Refrescar usuario para tener identities actualizadas
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) currentUser = user;
+  } catch(_){}
+  currentPasskeyCount = countUserPasskeys();
+
   if (shouldOfferPasskeyOnboarding()){
     showStep(8);
   } else {
@@ -2364,6 +2478,7 @@ async function logout(){
   await sb.auth.signOut();
   currentUser = null;
   dashboardData = null;
+  currentPasskeyCount = 0;
   updateAuthUI();
   showStep(0);
 }
@@ -2371,16 +2486,22 @@ async function logout(){
 function backToCover(){ showStep(0); }
 
 function goToProfile(){
-  // Ir al dashboard y activar la pestaña Perfil
   if (currentStep !== 7){
     showStep(7);
     setTimeout(() => switchTab('profile'), 100);
   } else {
     switchTab('profile');
-    // Hacer scroll al top del panel
     const panel = document.getElementById('tabProfile');
     if (panel) panel.scrollIntoView({ behavior:'smooth', block:'start' });
   }
+}
+
+/* =========================================================
+   VUELTA A CUENTA desde éxito de reserva
+   ========================================================= */
+async function backToAccountFromSuccess(){
+  await loadDashboard();
+  showStep(7);
 }
 
 /* =========================================================
@@ -2593,7 +2714,7 @@ function renderProfile(c){
   const el = document.getElementById('profileContent');
   const birth = c.birth_date ? formatLongDate(c.birth_date) : 'No definido';
   const tierLabel = ({bronze:'Bronce',silver:'Plata',gold:'Oro'})[c.loyalty_tier] || 'Bronce';
-  const hasPasskey = userHasPasskey();
+  const hasPasskey = currentPasskeyCount > 0;
 
   el.innerHTML = `
     <div class="profile-row">
@@ -2629,10 +2750,10 @@ function renderProfile(c){
       <div class="ic"><svg><use href="#i-fingerprint"/></svg></div>
       <div class="txt">
         <div class="lbl">Acceso con huella</div>
-        <div class="val">${hasPasskey ? 'Activado en este dispositivo' : 'No configurado'}</div>
+        <div class="val">${hasPasskey ? `Activado (${currentPasskeyCount})` : 'No configurado'}</div>
       </div>
       <button class="edit" onclick="registerPasskey()">
-        ${hasPasskey ? 'Re-activar' : 'Activar'}
+        ${hasPasskey ? '+ Añadir otra' : 'Activar'}
       </button>
     </div>
     ` : ''}
@@ -3228,7 +3349,15 @@ function fillSuccess(b){
   document.getElementById('successName').textContent = first || 'gracias';
 
   const saveBox = document.getElementById('saveAccountBox');
-  saveBox.style.display = currentUser ? 'none' : 'block';
+  const backBtn = document.getElementById('btnBackToAccount');
+
+  if (currentUser){
+    saveBox.style.display = 'none';
+    backBtn.style.display = 'inline-flex';
+  } else {
+    saveBox.style.display = 'block';
+    backBtn.style.display = 'none';
+  }
 }
 
 /* =========================================================
@@ -3396,7 +3525,7 @@ document.getElementById('authEmail').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); sendOtp(); }
 });
 
-/* ============ OTP LISTENERS (8 casillas flexibles) ============ */
+/* ============ OTP LISTENERS ============ */
 function scheduleOtpAutoSubmit(){
   clearTimeout(otpAutoSubmitTimer);
   const inputs = document.querySelectorAll('#otpInputs input');
