@@ -64,6 +64,9 @@
     align-items:center; gap:10px;
     margin-bottom:26px; flex-shrink:0;
   }
+  .screen-head.with-profile{
+    grid-template-columns:40px 1fr 40px 40px;
+  }
   .icon-btn{
     width:40px; height:40px;
     background:transparent; border:none; color:#fff;
@@ -74,6 +77,15 @@
   .icon-btn:hover{ background:var(--card); color:var(--gold); }
   .icon-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .icon-btn svg{ width:20px; height:20px; }
+  .icon-btn.profile-btn{
+    border:1px solid var(--gold-border);
+    color:var(--gold);
+    background:rgba(217,178,115,.06);
+  }
+  .icon-btn.profile-btn:hover{
+    background:rgba(217,178,115,.15);
+    border-color:var(--gold);
+  }
   .screen-title{
     font-family:'Playfair Display',serif;
     font-size:20px; font-weight:500;
@@ -713,6 +725,91 @@
   }
   .auth-back button:hover{ color:#fff; }
 
+  /* ============ PASSKEY ONBOARDING (nueva pantalla) ============ */
+  .passkey-onboard{
+    width:100%; max-width:520px;
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center; margin-block:auto;
+  }
+  .fingerprint-hero{
+    width:110px; height:110px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gold);
+    margin-bottom:26px;
+    position:relative;
+    background:radial-gradient(circle,
+      rgba(217,178,115,.18) 0%,
+      rgba(217,178,115,.05) 50%,
+      transparent 75%);
+    animation:pop .55s cubic-bezier(.22,.61,.36,1);
+  }
+  .fingerprint-hero::before,
+  .fingerprint-hero::after{
+    content:""; position:absolute;
+    border-radius:50%; border:1.5px solid var(--gold-border);
+    animation:ripple 2.6s ease-out infinite;
+  }
+  .fingerprint-hero::before{
+    inset:6px;
+    animation-delay:0s;
+  }
+  .fingerprint-hero::after{
+    inset:-6px;
+    animation-delay:1.3s;
+  }
+  .fingerprint-hero svg{
+    width:52px; height:52px;
+    position:relative; z-index:1;
+    filter:drop-shadow(0 0 12px rgba(217,178,115,.6));
+  }
+  @keyframes ripple{
+    0%{ transform:scale(0.92); opacity:.7; }
+    100%{ transform:scale(1.35); opacity:0; }
+  }
+  .passkey-onboard h2{
+    font-family:'Playfair Display',serif;
+    font-size:clamp(28px,7vw,36px);
+    font-weight:500; color:var(--gold-2);
+    letter-spacing:.01em; margin-bottom:10px;
+    text-wrap:balance;
+  }
+  .passkey-onboard .lead{
+    font-size:14px; color:var(--text-2); font-weight:300;
+    line-height:1.55; margin-bottom:26px;
+    max-width:360px;
+  }
+  .benefits{
+    width:100%; display:flex; flex-direction:column; gap:10px;
+    margin-bottom:26px;
+  }
+  .benefit{
+    display:grid; grid-template-columns:40px 1fr;
+    gap:14px; align-items:center;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:13px 16px;
+    text-align:left;
+  }
+  .benefit .ic{
+    width:40px; height:40px; border-radius:11px;
+    background:var(--gold-dim);
+    border:1px solid var(--gold-border);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gold);
+  }
+  .benefit .ic svg{ width:18px; height:18px; }
+  .benefit .txt h4{
+    font-family:'Playfair Display',serif;
+    font-size:14px; font-weight:500; color:#fff;
+    margin-bottom:2px; line-height:1.2;
+  }
+  .benefit .txt p{
+    font-size:11.5px; color:var(--muted); line-height:1.4;
+  }
+
+  /* ============ DASHBOARD ============ */
   .dash-hero{
     width:100%; max-width:520px;
     display:flex; align-items:center; gap:14px; margin-bottom:22px;
@@ -1049,6 +1146,8 @@
     .cal-header h4{ font-size:16px; }
     .svc-top h3{ font-size:15.5px; }
     .points-value{ font-size:30px; }
+    .fingerprint-hero{ width:96px; height:96px; }
+    .fingerprint-hero svg{ width:44px; height:44px; }
   }
   @media (max-height:700px){
     .cover-content{ padding-bottom:36px; }
@@ -1058,6 +1157,9 @@
     .screen, .screen.active{ transition-duration:.01ms !important; }
     .btn:hover{ transform:none; }
     .section-heading h2.animate{ animation:none; }
+    .fingerprint-hero,
+    .fingerprint-hero::before,
+    .fingerprint-hero::after{ animation:none; }
   }
 </style>
 </head>
@@ -1083,6 +1185,11 @@
   <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="8" r="4"/>
     <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+  </symbol>
+  <symbol id="i-user-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="10" r="3"/>
+    <path d="M6.5 19.5c1-3 3-4.5 5.5-4.5s4.5 1.5 5.5 4.5"/>
   </symbol>
   <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/>
@@ -1138,6 +1245,13 @@
     <path d="M19 11a8 8 0 0 0-8-8"/>
     <path d="M9 20a4 4 0 0 1-4-4"/>
     <path d="M15 20a4 4 0 0 0 4-4v-1"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/>
+    <path d="M9 12l2 2 4-4"/>
+  </symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
   </symbol>
 </svg>
 
@@ -1544,7 +1658,7 @@
         </div>
       </div>
 
-      <!-- PASO B: verificar código (SMS o Email OTP) -->
+      <!-- PASO B: verificar código -->
       <div id="authStepB" style="display:none">
         <div class="section-heading">
           <h2>Ingresa el código</h2>
@@ -1586,11 +1700,14 @@
 
   <!-- ======================== DASHBOARD ======================== -->
   <section class="screen" data-step="7">
-    <header class="screen-head">
+    <header class="screen-head with-profile">
       <button class="icon-btn" onclick="backToCover()" aria-label="Inicio">
         <svg><use href="#i-arrow-left"/></svg>
       </button>
       <h1 class="screen-title">Mi cuenta</h1>
+      <button class="icon-btn profile-btn" onclick="goToProfile()" aria-label="Mi perfil">
+        <svg><use href="#i-user-circle"/></svg>
+      </button>
       <button class="icon-btn" onclick="logout()" aria-label="Cerrar sesión">
         <svg><use href="#i-log-out"/></svg>
       </button>
@@ -1656,6 +1773,52 @@
     </div>
   </section>
 
+  <!-- ======================== PASSKEY ONBOARDING (post-login) ======================== -->
+  <section class="screen" data-step="8">
+    <div class="passkey-onboard">
+      <div class="fingerprint-hero">
+        <svg><use href="#i-fingerprint"/></svg>
+      </div>
+
+      <h2>Activa tu huella</h2>
+      <p class="lead">Entra a tu cuenta en un toque. Sin códigos, sin esperas, sin escribir nada.</p>
+
+      <div class="benefits">
+        <div class="benefit">
+          <div class="ic"><svg><use href="#i-bolt"/></svg></div>
+          <div class="txt">
+            <h4>Entrada en 1 segundo</h4>
+            <p>Un toque y ya estás dentro de tu cuenta.</p>
+          </div>
+        </div>
+        <div class="benefit">
+          <div class="ic"><svg><use href="#i-shield"/></svg></div>
+          <div class="txt">
+            <h4>Mucho más seguro</h4>
+            <p>Tu huella nunca sale de tu teléfono.</p>
+          </div>
+        </div>
+        <div class="benefit">
+          <div class="ic"><svg><use href="#i-check"/></svg></div>
+          <div class="txt">
+            <h4>Sin códigos ni contraseñas</h4>
+            <p>Olvídate de esperar SMS o correos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-buttons" style="width:100%;max-width:520px">
+        <button class="btn" id="btnActivatePasskey" onclick="activatePasskeyOnboarding()">
+          <svg><use href="#i-fingerprint"/></svg>
+          <span>Activar huella ahora</span>
+        </button>
+        <button class="btn ghost" onclick="skipPasskeyOnboarding()">
+          <span>Ahora no</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1680,6 +1843,8 @@ const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                 "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const MONTHS_SHORT = ["Ene","Feb","Mar","Abr","May","Jun",
                       "Jul","Ago","Sep","Oct","Nov","Dic"];
+
+const PASSKEY_DISMISS_KEY = 'barberlink_passkey_dismissed_v1';
 
 /* =========================================================
    ESTADO
@@ -1707,6 +1872,7 @@ let otpCooldown = 0;
 let otpAutoSubmitTimer = null;
 
 let passkeySupported = false;
+let shouldShowPasskeyOnboarding = false;   // se activa tras un login nuevo
 
 function startOfToday(){
   const d = new Date(); d.setHours(0,0,0,0); return d;
@@ -1791,6 +1957,19 @@ async function detectPasskeySupport(){
     }
     return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
   } catch { return false; }
+}
+
+function userHasPasskey(){
+  return !!currentUser?.identities?.some(i => i.provider === 'passkey');
+}
+
+function wasPasskeyOnboardingDismissed(){
+  try { return localStorage.getItem(PASSKEY_DISMISS_KEY) === '1'; }
+  catch { return false; }
+}
+
+function markPasskeyOnboardingDismissed(){
+  try { localStorage.setItem(PASSKEY_DISMISS_KEY, '1'); } catch {}
 }
 
 /* =========================================================
@@ -1916,7 +2095,7 @@ async function sendOtp(){
     return;
   }
 
-  /* ============ MODO EMAIL (OTP con 6-8 dígitos) ============ */
+  /* ============ MODO EMAIL ============ */
   const email = document.getElementById('authEmail').value.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     authError('Ingresa un correo válido');
@@ -2014,7 +2193,7 @@ function backToAuthA(){
 }
 
 /* =========================================================
-   VERIFICAR OTP (flexible: 6, 7 u 8 dígitos)
+   VERIFICAR OTP
    ========================================================= */
 async function verifyOtp(){
   const inputs = document.querySelectorAll('#otpInputs input');
@@ -2086,7 +2265,7 @@ async function loginWithPasskey(){
 }
 
 /* =========================================================
-   PASSKEY: registrar huella
+   PASSKEY: registrar huella (desde el perfil)
    ========================================================= */
 async function registerPasskey(){
   if (!currentUser) return;
@@ -2107,6 +2286,58 @@ async function registerPasskey(){
 }
 
 /* =========================================================
+   PASSKEY: onboarding post-login
+   ========================================================= */
+function shouldOfferPasskeyOnboarding(){
+  if (!passkeySupported) return false;
+  if (!currentUser) return false;
+  if (userHasPasskey()) return false;
+  if (wasPasskeyOnboardingDismissed()) return false;
+  return true;
+}
+
+async function activatePasskeyOnboarding(){
+  const btn = document.getElementById('btnActivatePasskey');
+  const original = btn.querySelector('span').textContent;
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Activando…';
+
+  try {
+    const { error } = await sb.auth.registerPasskey();
+    if (error) throw error;
+
+    // Refrescar el usuario para actualizar identities
+    const { data: { user } } = await sb.auth.getUser();
+    currentUser = user;
+
+    showGlobalSuccess('¡Huella activada! La próxima vez entras con un toque.');
+    markPasskeyOnboardingDismissed(); // no volver a mostrarlo
+
+    await loadDashboard();
+    showStep(7);
+  } catch (e){
+    console.error('[passkey onboarding]', e);
+    const m = (e && e.message) || '';
+    if (m.toLowerCase().includes('cancel')){
+      // usuario canceló el diálogo biométrico
+    } else if (m.toLowerCase().includes('not allowed')){
+      showGlobalError('Tu dispositivo no permitió activar la huella.');
+    } else {
+      showGlobalError('No pudimos activar la huella. Intenta de nuevo.');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.querySelector('span').textContent = original;
+  }
+}
+
+async function skipPasskeyOnboarding(){
+  markPasskeyOnboardingDismissed();
+  await loadDashboard();
+  showStep(7);
+}
+
+/* =========================================================
    POST-LOGIN
    ========================================================= */
 async function onLoginSuccess(){
@@ -2117,8 +2348,13 @@ async function onLoginSuccess(){
     }
   } catch(_) {}
 
-  await loadDashboard();
-  showStep(7);
+  // Decidir si mostrar onboarding de huella o ir directo al dashboard
+  if (shouldOfferPasskeyOnboarding()){
+    showStep(8);
+  } else {
+    await loadDashboard();
+    showStep(7);
+  }
 }
 
 /* =========================================================
@@ -2133,6 +2369,19 @@ async function logout(){
 }
 
 function backToCover(){ showStep(0); }
+
+function goToProfile(){
+  // Ir al dashboard y activar la pestaña Perfil
+  if (currentStep !== 7){
+    showStep(7);
+    setTimeout(() => switchTab('profile'), 100);
+  } else {
+    switchTab('profile');
+    // Hacer scroll al top del panel
+    const panel = document.getElementById('tabProfile');
+    if (panel) panel.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
 
 /* =========================================================
    DASHBOARD
@@ -2344,7 +2593,7 @@ function renderProfile(c){
   const el = document.getElementById('profileContent');
   const birth = c.birth_date ? formatLongDate(c.birth_date) : 'No definido';
   const tierLabel = ({bronze:'Bronce',silver:'Plata',gold:'Oro'})[c.loyalty_tier] || 'Bronce';
-  const hasPasskey = !!currentUser?.identities?.some(i => i.provider === 'passkey');
+  const hasPasskey = userHasPasskey();
 
   el.innerHTML = `
     <div class="profile-row">
@@ -3153,12 +3402,10 @@ function scheduleOtpAutoSubmit(){
   const inputs = document.querySelectorAll('#otpInputs input');
   const filled = Array.from(inputs).filter(i => i.value).length;
 
-  // 8 dígitos → submit inmediato
   if (filled === 8){
     verifyOtp();
     return;
   }
-  // 6 o 7 → esperar 1.5s por si sigue escribiendo
   if (filled >= 6){
     otpAutoSubmitTimer = setTimeout(() => verifyOtp(), 1500);
   }
