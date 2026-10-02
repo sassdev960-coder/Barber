@@ -3699,20 +3699,30 @@ async function saveProfileChanges(){
 
   try {
     /*
-     * La función existente update_my_profile ya se usa para guardar el
-     * celular. La versión ampliada debe aceptar los cuatro parámetros.
-     * Si el backend todavía solo acepta p_phone, mostramos un error claro
-     * en lugar de fingir que los cambios fueron guardados.
+     * Los datos personales del perfil viven en public.clients.
+     * La política clients_update_own permite que cada usuario autenticado
+     * actualice únicamente su propia fila (id = auth.uid()).
+     *
+     * Guardamos directamente aquí para que nombre, apellido, cumpleaños y
+     * celular sean realmente editables desde Mi perfil, sin depender de la
+     * firma de la RPC update_my_profile. Las reservas históricas conservan
+     * los datos con los que fueron creadas.
      */
-    const { error } = await sb.rpc('update_my_profile', {
-      p_first_name: first,
-      p_last_name: last || null,
-      p_birth_date: birth,
-      p_phone: phone || null
-    });
+    const { error } = await sb
+      .from('clients')
+      .update({
+        first_name: first,
+        last_name: last || null,
+        birth_date: birth,
+        phone: phone || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentUser.id);
 
     if (error) throw error;
 
+    // Volver a cargar el perfil desde Supabase para reflejar inmediatamente
+    // los datos personales guardados.
     await loadDashboard();
     showProfileEditSuccess('Perfil actualizado correctamente.');
     setTimeout(() => {
@@ -3726,14 +3736,14 @@ async function saveProfileChanges(){
 
     const msg = String(e?.message || '').toLowerCase();
 
-    if (msg.includes('function') && msg.includes('does not exist')){
-      showProfileEditError(
-        'El panel está listo, pero Supabase todavía necesita actualizar la función update_my_profile para aceptar nombre, apellido y fecha de nacimiento.'
-      );
-    } else if (msg.includes('not_authenticated')){
+    if (msg.includes('duplicate') || msg.includes('unique')){
+      showProfileEditError('Ese número de celular ya está asociado a otra cuenta.');
+    } else if (msg.includes('not_authenticated') || msg.includes('jwt')){
       showProfileEditError('Sesión expirada. Vuelve a entrar.');
+    } else if (msg.includes('row-level security') || msg.includes('permission denied')){
+      showProfileEditError('Supabase no permitió actualizar tu perfil. Verifica la política clients_update_own.');
     } else {
-      showProfileEditError('No pudimos guardar los cambios. Revisa la configuración de Supabase.');
+      showProfileEditError('No pudimos guardar los cambios. Intenta nuevamente.');
     }
   } finally {
     btn.disabled = false;
