@@ -1,12 +1,33 @@
+# Dependencias
 node_modules/
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-android/app/google-services.json
-android/app/src/main/assets/public/
-android/app/src/main/res/xml/config.xml
-.env
-.DS_Store
+
+# Capacitor - plataformas generadas
+android/
+ios/
+.capacitor/
+
+# Build outputs
+dist/
+build/
+*.aab
+*.apk
+
+# Keystore (NUNCA subir)
 *.keystore
 *.jks
+keystore.properties
+
+# Archivos sensibles
+.env
+.env.local
+google-services.json
+
+# IDE
+.vscode/
+.idea/
+*.iml
+.cxx/
+
+# OS
+.DS_Store
+Thumbs.db
