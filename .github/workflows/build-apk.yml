@@ -38,32 +38,47 @@ jobs:
           cat capacitor.config.json
           echo "=== www/ ==="
           ls -la www/
+          echo "=== resources/ (iconos) ==="
+          ls -la resources/ || echo "⚠️ No existe resources/ — se usará ícono por defecto"
 
       - name: Add Android platform
-        run: |
-          npx cap add android
-          echo "=== Verificando que android/ se creó ==="
-          ls -la android/
-          ls -la android/app/
+        run: npx cap add android
 
-      - name: Decode google-services.json
+      # 🔥 NUEVO: Genera íconos y splash personalizados
+      - name: Generate custom icons & splash
         run: |
-          mkdir -p android/app
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
-          echo "google-services.json creado ($(wc -c < android/app/google-services.json) bytes)"
-          head -c 100 android/app/google-services.json
-          echo ""
+          if [ -f "resources/icon.png" ]; then
+            npx @capacitor/assets generate --android \
+              --iconBackgroundColor '#ffffff' \
+              --iconBackgroundColorDark '#000000' \
+              --splashBackgroundColor '#ffffff' \
+              --splashBackgroundColorDark '#000000'
+            echo "✅ Íconos generados"
+          else
+            echo "⚠️ No se encontró resources/icon.png — usando íconos por defecto"
+          fi
+
+      # Si usas Firebase, descomenta y asegúrate de configurar el plugin
+      # - name: Decode google-services.json
+      #   run: |
+      #     echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
 
       - name: Patch AndroidManifest permissions
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if ! grep -q "POST_NOTIFICATIONS" "$MANIFEST"; then
             sed -i 's|</manifest>|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n<uses-permission android:name="android.permission.VIBRATE"/>\n<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n</manifest>|' "$MANIFEST"
-            echo "Permisos agregados al manifest"
+            echo "✅ Permisos agregados al manifest"
           fi
 
       - name: Capacitor sync
         run: npx cap sync android
+
+      - name: Verify www copied to android assets
+        run: |
+          echo "=== Verificando que www/ se copió ==="
+          ls -la android/app/src/main/assets/public/ || echo "❌ www/ NO se copió"
+          head -n 20 android/app/src/main/assets/public/index.html || true
 
       - name: Configure Android SDK
         run: |
