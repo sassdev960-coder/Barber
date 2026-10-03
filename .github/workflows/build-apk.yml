@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Release AAB
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build Android AAB
     runs-on: ubuntu-latest
 
     steps:
@@ -28,73 +28,95 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
-      - name: Verify project structure
+      - name: Verify structure
         run: |
-          echo "=== Archivos en la raíz ==="
+          echo "=== Raíz ==="
           ls -la
-          echo "=== package.json ==="
-          cat package.json
-          echo "=== capacitor.config.json ==="
-          cat capacitor.config.json
           echo "=== www/ ==="
           ls -la www/
-          echo "=== resources/ (iconos) ==="
-          ls -la resources/ || echo "⚠️ No existe resources/ — se usará ícono por defecto"
+          echo "=== resources/ ==="
+          ls -la resources/ || echo "Sin resources/"
 
       - name: Add Android platform
-        run: npx cap add android
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          else
+            echo "android/ ya existe, se reutiliza"
+          fi
 
-      # 🔥 NUEVO: Genera íconos y splash personalizados
-      - name: Generate custom icons & splash
+      - name: Generate icons and splash
         run: |
           if [ -f "resources/icon.png" ]; then
             npx @capacitor/assets generate --android \
-              --iconBackgroundColor '#ffffff' \
-              --iconBackgroundColorDark '#000000' \
-              --splashBackgroundColor '#ffffff' \
-              --splashBackgroundColorDark '#000000'
-            echo "✅ Íconos generados"
+              --iconBackgroundColor '#0a0a0a' \
+              --iconBackgroundColorDark '#0a0a0a' \
+              --splashBackgroundColor '#0a0a0a' \
+              --splashBackgroundColorDark '#0a0a0a'
           else
-            echo "⚠️ No se encontró resources/icon.png — usando íconos por defecto"
+            echo "Sin resources/icon.png — usando ícono por defecto"
           fi
 
-      # Si usas Firebase, descomenta y asegúrate de configurar el plugin
-      # - name: Decode google-services.json
-      #   run: |
-      #     echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+      - name: Decode google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+          test -s android/app/google-services.json
 
-      - name: Patch AndroidManifest permissions
+      - name: Patch AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if ! grep -q "POST_NOTIFICATIONS" "$MANIFEST"; then
             sed -i 's|</manifest>|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n<uses-permission android:name="android.permission.VIBRATE"/>\n<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n</manifest>|' "$MANIFEST"
-            echo "✅ Permisos agregados al manifest"
           fi
 
       - name: Capacitor sync
         run: npx cap sync android
 
-      - name: Verify www copied to android assets
+      - name: Configure signing
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "=== Verificando que www/ se copió ==="
-          ls -la android/app/src/main/assets/public/ || echo "❌ www/ NO se copió"
-          head -n 20 android/app/src/main/assets/public/index.html || true
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/noir-release.keystore
+
+          cat >> android/app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("noir-release.keystore")
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("KEY_ALIAS")
+                      keyPassword System.getenv("KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled false
+                  }
+              }
+          }
+          EOF
 
       - name: Configure Android SDK
         run: |
           echo "sdk.dir=/usr/local/lib/android/sdk" > android/local.properties
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
 
-      - name: Grant execute to gradlew
+      - name: Grant execute
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Build Release AAB
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: cd android && ./gradlew bundleRelease --no-daemon
 
-      - name: Upload APK
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: noir-admin-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: noir-admin-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
