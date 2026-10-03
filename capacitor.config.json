@@ -5,18 +5,34 @@
   "server": {
     "androidScheme": "https"
   },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0a0a0a",
+    "webContentsDebuggingEnabled": false
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 1500,
+      "launchAutoHide": true,
       "backgroundColor": "#0a0a0a",
-      "showSpinner": false
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
     },
     "StatusBar": {
-      "style": "DARK",
-      "backgroundColor": "#0a0a0a"
+      "style": "LIGHT",
+      "backgroundColor": "#0a0a0a",
+      "overlaysWebView": false
     },
     "FirebaseMessaging": {
       "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "DARK",
+      "resizeOnFullScreen": true
     }
   }
 }
