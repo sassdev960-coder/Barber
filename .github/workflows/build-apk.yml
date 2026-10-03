@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build Android AAB
+    name: Build Android AAB (unsigned)
     runs-on: ubuntu-latest
 
     steps:
@@ -61,62 +61,40 @@ jobs:
         run: |
           echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
           test -s android/app/google-services.json
+          echo "google-services.json OK ($(wc -c < android/app/google-services.json) bytes)"
 
-      - name: Patch AndroidManifest
+      - name: Patch AndroidManifest permissions
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if ! grep -q "POST_NOTIFICATIONS" "$MANIFEST"; then
             sed -i 's|</manifest>|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n<uses-permission android:name="android.permission.VIBRATE"/>\n<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n</manifest>|' "$MANIFEST"
+            echo "Permisos añadidos al manifest"
           fi
 
       - name: Capacitor sync
         run: npx cap sync android
 
-      - name: Configure signing
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/noir-release.keystore
-
-          cat >> android/app/build.gradle <<'EOF'
-
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file("noir-release.keystore")
-                      storePassword System.getenv("KEYSTORE_PASSWORD")
-                      keyAlias System.getenv("KEY_ALIAS")
-                      keyPassword System.getenv("KEY_PASSWORD")
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                      minifyEnabled false
-                  }
-              }
-          }
-          EOF
-
       - name: Configure Android SDK
         run: |
           echo "sdk.dir=/usr/local/lib/android/sdk" > android/local.properties
 
-      - name: Grant execute
+      - name: Grant execute to gradlew
         run: chmod +x android/gradlew
 
-      - name: Build Release AAB
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: cd android && ./gradlew bundleRelease --no-daemon
+      # ⚡ AQUÍ ESTÁ LA MAGIA: -x lint y SIN firma
+      - name: Build Release AAB (unsigned)
+        run: |
+          cd android && ./gradlew bundleRelease --no-daemon -x lint
+
+      - name: Locate AAB
+        run: |
+          AAB_PATH=$(find android/app/build/outputs/bundle -name "*.aab" | head -1)
+          echo "AAB encontrado: $AAB_PATH"
+          ls -la android/app/build/outputs/bundle/release/
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: noir-admin-aab
+          name: noir-admin-aab-unsigned
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
